@@ -1,0 +1,13 @@
+{
+  "name": "lada-knowledge-graph",
+  "version": "1.0.0",
+  "description": "Граф знаний студента-культуролога философского факультета МГУ: прочитанные и непрочитанные книги",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "validate": "node scripts/validate.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "keywords": ["knowledge-graph", "culturology", "philosophy", "reading-list", "msu"],
+  "license": "MIT"
+}

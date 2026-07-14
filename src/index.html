@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Граф знаний культуролога</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1 id="app-title">Граф знаний</h1>
+    <p id="app-subtitle">Модель знаний студента</p>
+    <p id="app-program"></p>
+  </header>
+
+  <aside class="sidebar">
+    <h4>Поиск</h4>
+    <input id="search" type="search" placeholder="Автор или название…" autocomplete="off">
+
+    <h4>Прогресс</h4>
+    <div id="stats"></div>
+
+    <h4>Статус чтения</h4>
+    <div id="filter-status"></div>
+
+    <h4>Дисциплины / курсы</h4>
+    <div id="filter-discipline"></div>
+
+    <button class="btn" id="reset-view">Сбросить вид</button>
+  </aside>
+
+  <main class="graph-wrap">
+    <svg id="graph"></svg>
+  </main>
+
+  <aside class="detail" id="detail">
+    <div class="detail__empty">
+      <p>Выберите книгу в графе, чтобы увидеть автора, статус чтения, заметку и связи с другими текстами.</p>
+      <p class="muted">Наведите курсор на узел — подсветятся его соседи. Тяните узлы, крутите колесо для зума, тяните фон для панорамы.</p>
+    </div>
+  </aside>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

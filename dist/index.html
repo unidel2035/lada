@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Граф знаний культуролога</title>
+  <style>:root {
+  --bg: #14161c;
+  --bg-panel: #1c1f28;
+  --bg-elev: #232735;
+  --line: #2c3140;
+  --text: #e8eaf0;
+  --muted: #969cad;
+  --accent: #7aa2f7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "PT Sans", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  display: grid;
+  grid-template-columns: 320px 1fr 340px;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header header header"
+    "sidebar graph detail";
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ---- Шапка ---- */
+header {
+  grid-area: header;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #1a1d26, #14161c);
+}
+#app-title { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: .2px; }
+#app-subtitle { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+#app-program { margin: 4px 0 0; font-size: 12px; color: var(--accent); }
+
+/* ---- Боковая панель фильтров ---- */
+aside.sidebar {
+  grid-area: sidebar;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--line);
+  padding: 18px 16px;
+  overflow-y: auto;
+}
+.sidebar h4 {
+  margin: 22px 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.sidebar h4:first-of-type { margin-top: 4px; }
+
+#search {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 13px;
+}
+#search::placeholder { color: var(--muted); }
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  font-size: 12.5px;
+  cursor: pointer;
+  border-radius: 6px;
+  line-height: 1.25;
+}
+.toggle:hover { background: var(--bg-elev); }
+.toggle input { accent-color: var(--accent); margin: 0; flex: none; }
+.toggle i, .chip i {
+  width: 11px; height: 11px; border-radius: 3px; flex: none;
+}
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; margin: 0 10px 6px 0;
+}
+
+#stats { margin-top: 4px; }
+.progress__head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 12px; color: var(--muted); margin-bottom: 6px;
+}
+.progress__head strong { color: var(--text); font-weight: 600; }
+.progress__bar {
+  display: flex; height: 10px; border-radius: 5px; overflow: hidden;
+  background: var(--bg-elev);
+}
+.progress__bar span { height: 100%; }
+
+button.btn {
+  margin-top: 18px;
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+button.btn:hover { border-color: var(--accent); }
+
+/* ---- Граф ---- */
+main.graph-wrap { grid-area: graph; position: relative; overflow: hidden; }
+#graph { width: 100%; height: 100%; display: block; cursor: grab; background:
+  radial-gradient(circle at 50% 40%, #191c25 0%, #14161c 70%); }
+#graph:active { cursor: grabbing; }
+
+.link {
+  stroke: #3a4152;
+  stroke-width: 1;
+  stroke-opacity: .55;
+}
+.link--theme { stroke: #4b556b; stroke-dasharray: 3 3; stroke-opacity: .4; }
+.link--polemic { stroke: #b5556b; }
+.link--develops { stroke: #4f7bc0; }
+.link.is-active { stroke-opacity: 1; stroke-width: 2; }
+.link.is-dim { stroke-opacity: .08; }
+.link.is-hidden { display: none; }
+
+.node { cursor: pointer; }
+.node__shape {
+  fill: var(--node-color, #6b7280);
+  stroke: #0e1015;
+  stroke-width: 1.5;
+  transition: opacity .15s;
+}
+.node__label {
+  fill: #c7ccd8;
+  font-size: 9px;
+  text-anchor: middle;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #14161c;
+  stroke-width: 2.5px;
+}
+.node__shape--theme {
+  fill: #2b3550;
+  stroke: #5b6b8f;
+  stroke-width: 1;
+}
+.node.is-dim { opacity: .18; }
+.node.is-selected .node__shape { stroke: #fff; stroke-width: 2.5; }
+.node.is-hidden { display: none; }
+
+/* Визуальный статус чтения */
+.node--read .node__shape    { fill: var(--node-color); }
+.node--reading .node__shape { fill: var(--node-color); stroke: #e0a92e; stroke-width: 2.5; }
+.node--planned .node__shape { fill: var(--node-color); fill-opacity: .5; }
+.node--unread .node__shape  {
+  fill: #14161c; stroke: var(--node-color); stroke-width: 1.5;
+  stroke-dasharray: 2.5 2.5;
+}
+.node--unread .node__label { fill: #7d8394; }
+
+/* ---- Панель деталей ---- */
+aside.detail {
+  grid-area: detail;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--line);
+  padding: 22px 20px;
+  overflow-y: auto;
+}
+.detail__empty { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.detail__empty .muted { color: #6b7180; font-size: 12px; margin-top: 14px; }
+.detail__kicker { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.detail__title { margin: 6px 0 2px; font-size: 19px; line-height: 1.3; }
+.detail__author { color: var(--muted); font-size: 13px; }
+.detail__status { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
+.badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; color: #10130f; font-weight: 600; }
+.rating { color: #e0a92e; font-size: 13px; letter-spacing: 1px; }
+.detail__note {
+  font-size: 13px; line-height: 1.55; color: #cfd4e0;
+  border-left: 2px solid var(--line); padding-left: 12px; margin: 14px 0;
+}
+.detail__section { margin-top: 18px; }
+.detail__section h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin: 0 0 8px;
+}
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  font-size: 11.5px; padding: 3px 9px; border-radius: 20px;
+  background: var(--bg-elev); border: 1px solid var(--line);
+}
+.detail__list { list-style: none; margin: 0; padding: 0; font-size: 12.5px; line-height: 1.5; }
+.detail__list li { padding: 5px 0; border-bottom: 1px solid var(--line); }
+.detail__list em { color: var(--muted); font-style: normal; }
+.rel { color: var(--accent); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; vertical-align: middle; }
+.dot--read { background: #2f9e6f; }
+.dot--reading { background: #e0a92e; }
+.dot--planned { background: #4a7bd0; }
+.dot--unread { background: #8a8f99; }
+
+.muted { color: var(--muted); }
+code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+/* адаптив */
+@media (max-width: 1100px) {
+  body { grid-template-columns: 1fr; grid-template-rows: auto auto 1fr;
+    grid-template-areas: "header" "sidebar" "graph"; }
+  aside.detail { display: none; }
+}
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="app-title">Граф знаний</h1>
+    <p id="app-subtitle"></p>
+    <p id="app-program"></p>
+  </header>
+  <aside class="sidebar">
+    <h4>Поиск</h4>
+    <input id="search" type="search" placeholder="Автор или название…" autocomplete="off">
+    <h4>Прогресс</h4><div id="stats"></div>
+    <h4>Статус чтения</h4><div id="filter-status"></div>
+    <h4>Дисциплины / курсы</h4><div id="filter-discipline"></div>
+    <button class="btn" id="reset-view">Сбросить вид</button>
+  </aside>
+  <main class="graph-wrap"><svg id="graph"></svg></main>
+  <aside class="detail" id="detail">
+    <div class="detail__empty">
+      <p>Выберите книгу в графе, чтобы увидеть автора, статус чтения, заметку и связи.</p>
+      <p class="muted">Наведите курсор на узел — подсветятся соседи. Тяните узлы, зум колесом, панорама фоном.</p>
+    </div>
+  </aside>
+  <script>window.__GRAPH_DATA__ = {
+  "meta": {
+    "title": "Граф знаний культуролога",
+    "subtitle": "Модель знаний студента: прочитанные и непрочитанные книги",
+    "program": "Культурология · философский факультет МГУ им. М. В. Ломоносова",
+    "updated": "2026-07-14",
+    "statuses": [
+      { "id": "read",    "label": "Прочитано",    "color": "#2f9e6f" },
+      { "id": "reading", "label": "Читаю сейчас",  "color": "#e0a92e" },
+      { "id": "planned", "label": "В планах",      "color": "#4a7bd0" },
+      { "id": "unread",  "label": "Не прочитано",  "color": "#8a8f99" }
+    ],
+    "linkTypes": [
+      { "id": "develops",     "label": "развивает идеи" },
+      { "id": "influence",    "label": "испытал влияние" },
+      { "id": "polemic",      "label": "полемизирует" },
+      { "id": "parallel",     "label": "перекликается" },
+      { "id": "prerequisite", "label": "предшествует" }
+    ]
+  },
+
+  "disciplines": [
+    { "id": "teoriya-kultury",    "name": "Теория и история культурологии", "color": "#c0504d" },
+    { "id": "filosofiya-kultury", "name": "Философия культуры",              "color": "#8064a2" },
+    { "id": "semiotika",          "name": "Семиотика культуры",              "color": "#4bacc6" },
+    { "id": "antropologiya",      "name": "Культурная антропология",         "color": "#4f81bd" },
+    { "id": "estetika",           "name": "Эстетика",                        "color": "#e07b39" },
+    { "id": "filosofiya-mifa",    "name": "Философия мифа и религии",        "color": "#9bbb59" },
+    { "id": "sociologiya-kultury","name": "Социология культуры",             "color": "#c99a2e" },
+    { "id": "istoriya-filosofii", "name": "История философии",               "color": "#7f6084" },
+    { "id": "postmodern",         "name": "Современные теории (постмодерн)", "color": "#d24b6a" },
+    { "id": "istoriya-kultury",   "name": "История мировой культуры",        "color": "#5a8f7b" }
+  ],
+
+  "themes": [
+    { "id": "morfologiya",     "name": "Морфология культуры" },
+    { "id": "znak-simvol",     "name": "Знак и символ" },
+    { "id": "mif",             "name": "Миф" },
+    { "id": "civilizacii",     "name": "Теория цивилизаций" },
+    { "id": "igra",            "name": "Игра как феномен культуры" },
+    { "id": "vlast-diskurs",   "name": "Власть и дискурс" },
+    { "id": "massovaya",       "name": "Массовая культура" },
+    { "id": "telesnost",       "name": "Телесность и карнавал" },
+    { "id": "struktura",       "name": "Структурализм" },
+    { "id": "germenevtika",    "name": "Герменевтика" }
+  ],
+
+  "books": [
+    { "id": "kagan-fk",        "title": "Философия культуры",                 "author": "М. С. Каган",        "year": 1996, "status": "read",    "rating": 4, "discipline": "filosofiya-kultury", "themes": ["morfologiya"], "note": "Системный курс. Отправная точка для понимания культуры как целостности." },
+    { "id": "flier",          "title": "Культурология для культурологов",     "author": "А. Я. Флиер",        "year": 2000, "status": "read",    "rating": 3, "discipline": "teoriya-kultury",    "themes": ["morfologiya"], "note": "Обзор дисциплины и её понятийного аппарата." },
+    { "id": "gurevich-fk",    "title": "Философия культуры",                  "author": "П. С. Гуревич",      "year": 1994, "status": "read",    "rating": 3, "discipline": "filosofiya-kultury", "themes": [], "note": "Учебник, хорошо для повторения перед экзаменом." },
+    { "id": "mezhuev",        "title": "Идея культуры",                       "author": "В. М. Межуев",       "year": 2006, "status": "planned", "discipline": "filosofiya-kultury", "themes": [], "note": "Русская традиция философии культуры." },
+
+    { "id": "lotman-semiosfera", "title": "Семиосфера",                       "author": "Ю. М. Лотман",       "year": 2000, "status": "read",    "rating": 5, "discipline": "semiotika", "themes": ["znak-simvol", "struktura"], "note": "Ключевой текст. Понятие семиосферы как культурного пространства." },
+    { "id": "lotman-vzryv",   "title": "Культура и взрыв",                    "author": "Ю. М. Лотман",       "year": 1992, "status": "reading", "discipline": "semiotika", "themes": ["znak-simvol"], "note": "Динамика культуры: предсказуемое и взрывное." },
+    { "id": "lotman-besedy",  "title": "Беседы о русской культуре",           "author": "Ю. М. Лотман",       "year": 1994, "status": "read",    "rating": 5, "discipline": "istoriya-kultury", "themes": [], "note": "Быт и традиции русского дворянства как знаковая система." },
+    { "id": "uspensky",       "title": "Семиотика искусства",                 "author": "Б. А. Успенский",    "year": 1995, "status": "planned", "discipline": "semiotika", "themes": ["znak-simvol"], "note": "Поэтика композиции, точка зрения в тексте." },
+
+    { "id": "spengler",       "title": "Закат Европы",                        "author": "О. Шпенглер",        "year": 1918, "status": "reading", "discipline": "filosofiya-kultury", "themes": ["civilizacii", "morfologiya"], "note": "Морфология мировой истории; культура vs. цивилизация." },
+    { "id": "toynbee",        "title": "Постижение истории",                  "author": "А. Дж. Тойнби",      "year": 1934, "status": "planned", "discipline": "filosofiya-kultury", "themes": ["civilizacii"], "note": "Вызов-и-ответ, локальные цивилизации." },
+    { "id": "danilevsky",     "title": "Россия и Европа",                     "author": "Н. Я. Данилевский",  "year": 1869, "status": "unread",  "discipline": "filosofiya-kultury", "themes": ["civilizacii"], "note": "Культурно-исторические типы; предтеча Шпенглера." },
+
+    { "id": "huizinga-ludens","title": "Homo Ludens. Человек играющий",       "author": "Й. Хёйзинга",        "year": 1938, "status": "read",    "rating": 5, "discipline": "antropologiya", "themes": ["igra"], "note": "Игра как источник и форма культуры." },
+    { "id": "huizinga-osen",  "title": "Осень Средневековья",                 "author": "Й. Хёйзинга",        "year": 1919, "status": "planned", "discipline": "istoriya-kultury", "themes": [], "note": "Формы жизни и мышления позднего Средневековья." },
+
+    { "id": "cassirer-sf",    "title": "Философия символических форм",         "author": "Э. Кассирер",        "year": 1923, "status": "reading", "discipline": "filosofiya-kultury", "themes": ["znak-simvol", "mif"], "note": "Человек как animal symbolicum; миф, язык, наука." },
+    { "id": "cassirer-opyt",  "title": "Опыт о человеке",                     "author": "Э. Кассирер",        "year": 1944, "status": "read",    "rating": 4, "discipline": "filosofiya-kultury", "themes": ["znak-simvol"], "note": "Краткое изложение символической концепции." },
+
+    { "id": "geertz",         "title": "Интерпретация культур",               "author": "К. Гирц",            "year": 1973, "status": "read",    "rating": 4, "discipline": "antropologiya", "themes": [], "note": "Насыщенное описание; культура как текст." },
+
+    { "id": "bakhtin-rable",  "title": "Творчество Франсуа Рабле",            "author": "М. М. Бахтин",       "year": 1965, "status": "read",    "rating": 5, "discipline": "estetika", "themes": ["telesnost"], "note": "Карнавал, смеховая культура, гротескное тело." },
+    { "id": "bakhtin-slovo",  "title": "Эстетика словесного творчества",      "author": "М. М. Бахтин",       "year": 1979, "status": "planned", "discipline": "estetika", "themes": [], "note": "Диалог, автор и герой, хронотоп." },
+
+    { "id": "levistrauss-str","title": "Структурная антропология",            "author": "К. Леви-Стросс",     "year": 1958, "status": "read",    "rating": 4, "discipline": "antropologiya", "themes": ["struktura", "mif"], "note": "Метод структурного анализа мифа и родства." },
+    { "id": "levistrauss-mysl","title": "Первобытное мышление",               "author": "К. Леви-Стросс",     "year": 1962, "status": "planned", "discipline": "antropologiya", "themes": ["mif", "struktura"], "note": "Бриколаж, логика конкретного." },
+
+    { "id": "barthes-mif",    "title": "Мифологии",                           "author": "Р. Барт",            "year": 1957, "status": "read",    "rating": 4, "discipline": "semiotika", "themes": ["mif", "massovaya"], "note": "Миф как вторичная семиологическая система." },
+    { "id": "barthes-sz",     "title": "S/Z",                                 "author": "Р. Барт",            "year": 1970, "status": "unread",  "discipline": "semiotika", "themes": ["struktura"], "note": "Пять кодов, читаемое и писуемое." },
+
+    { "id": "foucault-slova", "title": "Слова и вещи",                        "author": "М. Фуко",            "year": 1966, "status": "reading", "discipline": "postmodern", "themes": ["vlast-diskurs", "struktura"], "note": "Эпистемы, археология гуманитарных наук." },
+    { "id": "foucault-nadzor","title": "Надзирать и наказывать",              "author": "М. Фуко",            "year": 1975, "status": "planned", "discipline": "postmodern", "themes": ["vlast-diskurs"], "note": "Дисциплинарная власть, паноптикум." },
+
+    { "id": "nietzsche-trag", "title": "Рождение трагедии из духа музыки",    "author": "Ф. Ницше",           "year": 1872, "status": "read",    "rating": 5, "discipline": "estetika", "themes": ["mif"], "note": "Аполлоническое и дионисийское." },
+
+    { "id": "freud-nedov",    "title": "Недовольство культурой",              "author": "З. Фрейд",           "year": 1930, "status": "read",    "rating": 4, "discipline": "filosofiya-kultury", "themes": [], "note": "Культура как отказ от влечений." },
+    { "id": "freud-totem",    "title": "Тотем и табу",                        "author": "З. Фрейд",           "year": 1913, "status": "planned", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Психоанализ происхождения религии и морали." },
+
+    { "id": "jung-arhetipy",  "title": "Архетипы и коллективное бессознательное","author": "К. Г. Юнг",       "year": 1934, "status": "reading", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Архетипы, коллективное бессознательное." },
+
+    { "id": "tylor",          "title": "Первобытная культура",                "author": "Э. Б. Тайлор",       "year": 1871, "status": "read",    "rating": 3, "discipline": "antropologiya", "themes": [], "note": "Анимизм, эволюционизм, определение культуры." },
+    { "id": "frazer",         "title": "Золотая ветвь",                       "author": "Дж. Фрэзер",         "year": 1890, "status": "reading", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Магия, религия, наука; умирающий и воскресающий бог." },
+    { "id": "malinovski",     "title": "Научная теория культуры",             "author": "Б. Малиновский",     "year": 1944, "status": "planned", "discipline": "antropologiya", "themes": [], "note": "Функционализм, культура как ответ на потребности." },
+
+    { "id": "weber-etika",    "title": "Протестантская этика и дух капитализма","author": "М. Вебер",         "year": 1905, "status": "read",    "rating": 4, "discipline": "sociologiya-kultury", "themes": [], "note": "Религиозная этика и хозяйственный этос." },
+    { "id": "simmel-dengi",   "title": "Философия денег",                     "author": "Г. Зиммель",         "year": 1900, "status": "unread",  "discipline": "sociologiya-kultury", "themes": [], "note": "Деньги как культурная форма." },
+
+    { "id": "gadamer",        "title": "Истина и метод",                      "author": "Х.-Г. Гадамер",      "year": 1960, "status": "planned", "discipline": "istoriya-filosofii", "themes": ["germenevtika"], "note": "Философская герменевтика, слияние горизонтов." },
+    { "id": "dilthey",        "title": "Введение в науки о духе",             "author": "В. Дильтей",         "year": 1883, "status": "unread",  "discipline": "istoriya-filosofii", "themes": ["germenevtika"], "note": "Понимание vs. объяснение." },
+
+    { "id": "benjamin",       "title": "Произведение искусства в эпоху его технической воспроизводимости", "author": "В. Беньямин", "year": 1936, "status": "read", "rating": 5, "discipline": "postmodern", "themes": ["massovaya"], "note": "Утрата ауры, репродукция." },
+    { "id": "adorno-dialektika","title": "Диалектика Просвещения",            "author": "Т. Адорно, М. Хоркхаймер","year": 1947,"status": "reading","discipline": "postmodern", "themes": ["massovaya"], "note": "Культуриндустрия, оборотная сторона разума." },
+    { "id": "baudrillard",    "title": "Симулякры и симуляция",               "author": "Ж. Бодрийяр",        "year": 1981, "status": "read",    "rating": 4, "discipline": "postmodern", "themes": ["massovaya", "znak-simvol"], "note": "Гиперреальность, порядок симулякров." },
+    { "id": "lyotard",        "title": "Состояние постмодерна",               "author": "Ж.-Ф. Лиотар",       "year": 1979, "status": "planned", "discipline": "postmodern", "themes": [], "note": "Недоверие к метанарративам." },
+    { "id": "debord",        "title": "Общество спектакля",                   "author": "Г. Дебор",           "year": 1967, "status": "planned", "discipline": "postmodern", "themes": ["massovaya"], "note": "Спектакль как отношение между людьми, опосредованное образами." },
+
+    { "id": "eco-struktura",  "title": "Отсутствующая структура",             "author": "У. Эко",             "year": 1968, "status": "planned", "discipline": "semiotika", "themes": ["struktura", "znak-simvol"], "note": "Введение в семиологию." },
+
+    { "id": "losev-mif",      "title": "Диалектика мифа",                     "author": "А. Ф. Лосев",        "year": 1930, "status": "read",    "rating": 5, "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Миф не выдумка, а живая реальность личности." },
+    { "id": "losev-vozr",     "title": "Эстетика Возрождения",                "author": "А. Ф. Лосев",        "year": 1978, "status": "unread",  "discipline": "estetika", "themes": [], "note": "Оборотная сторона титанизма." },
+
+    { "id": "averintsev",     "title": "Поэтика ранневизантийской литературы", "author": "С. С. Аверинцев",    "year": 1977, "status": "planned", "discipline": "istoriya-kultury", "themes": [], "note": "Слово и образ на границе античности и Средневековья." },
+
+    { "id": "kant-sud",       "title": "Критика способности суждения",        "author": "И. Кант",            "year": 1790, "status": "reading", "discipline": "estetika", "themes": [], "note": "Прекрасное, возвышенное, целесообразность." },
+    { "id": "hegel-fenom",    "title": "Феноменология духа",                  "author": "Г. В. Ф. Гегель",    "year": 1807, "status": "unread",  "discipline": "istoriya-filosofii", "themes": [], "note": "Движение духа к абсолютному знанию." },
+    { "id": "herder",         "title": "Идеи к философии истории человечества","author": "И. Г. Гердер",       "year": 1784, "status": "planned", "discipline": "filosofiya-kultury", "themes": [], "note": "Дух народа, историзм в понимании культур." },
+    { "id": "vico",           "title": "Основания новой науки",               "author": "Дж. Вико",           "year": 1725, "status": "unread",  "discipline": "istoriya-filosofii", "themes": ["civilizacii"], "note": "Круговорот наций, поэтическая мудрость." },
+
+    { "id": "plato-gos",      "title": "Государство",                         "author": "Платон",             "year": -375, "status": "read",    "rating": 4, "discipline": "istoriya-filosofii", "themes": [], "note": "Идеи, справедливость, роль искусства в полисе." },
+    { "id": "aristotle-poet", "title": "Поэтика",                             "author": "Аристотель",         "year": -335, "status": "read",    "rating": 4, "discipline": "estetika", "themes": [], "note": "Мимесис, катарсис, трагедия." },
+
+    { "id": "ortega",         "title": "Восстание масс",                      "author": "Х. Ортега-и-Гассет", "year": 1930, "status": "read",    "rating": 4, "discipline": "sociologiya-kultury", "themes": ["massovaya"], "note": "Человек массы и элита." },
+    { "id": "eliade",         "title": "Священное и мирское",                 "author": "М. Элиаде",          "year": 1957, "status": "reading", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Иерофания, сакральное время и пространство." }
+  ],
+
+  "links": [
+    { "source": "spengler",        "target": "danilevsky",       "type": "develops" },
+    { "source": "toynbee",         "target": "spengler",         "type": "polemic" },
+    { "source": "spengler",        "target": "herder",           "type": "influence" },
+    { "source": "herder",          "target": "vico",             "type": "develops" },
+
+    { "source": "kagan-fk",        "target": "hegel-fenom",      "type": "influence" },
+    { "source": "flier",           "target": "kagan-fk",         "type": "develops" },
+    { "source": "gurevich-fk",     "target": "kagan-fk",         "type": "parallel" },
+    { "source": "kagan-fk",        "target": "mezhuev",          "type": "parallel" },
+
+    { "source": "lotman-vzryv",    "target": "lotman-semiosfera","type": "develops" },
+    { "source": "lotman-semiosfera","target": "levistrauss-str", "type": "influence" },
+    { "source": "uspensky",        "target": "lotman-semiosfera","type": "parallel" },
+    { "source": "barthes-mif",     "target": "levistrauss-str",  "type": "influence" },
+    { "source": "barthes-sz",      "target": "barthes-mif",      "type": "develops" },
+    { "source": "levistrauss-mysl","target": "levistrauss-str",  "type": "develops" },
+    { "source": "eco-struktura",   "target": "levistrauss-str",  "type": "influence" },
+    { "source": "eco-struktura",   "target": "barthes-sz",       "type": "parallel" },
+
+    { "source": "foucault-nadzor", "target": "foucault-slova",   "type": "develops" },
+    { "source": "foucault-slova",  "target": "nietzsche-trag",   "type": "influence" },
+
+    { "source": "cassirer-opyt",   "target": "cassirer-sf",      "type": "develops" },
+    { "source": "cassirer-sf",     "target": "kant-sud",         "type": "influence" },
+    { "source": "losev-mif",       "target": "cassirer-sf",      "type": "parallel" },
+    { "source": "barthes-mif",     "target": "losev-mif",        "type": "parallel" },
+
+    { "source": "huizinga-osen",   "target": "huizinga-ludens",  "type": "parallel" },
+    { "source": "huizinga-ludens", "target": "geertz",           "type": "influence" },
+    { "source": "geertz",          "target": "weber-etika",      "type": "influence" },
+    { "source": "geertz",          "target": "levistrauss-str",  "type": "polemic" },
+
+    { "source": "bakhtin-slovo",   "target": "bakhtin-rable",    "type": "develops" },
+    { "source": "nietzsche-trag",  "target": "aristotle-poet",   "type": "polemic" },
+    { "source": "kant-sud",        "target": "aristotle-poet",   "type": "influence" },
+    { "source": "aristotle-poet",  "target": "plato-gos",        "type": "polemic" },
+    { "source": "hegel-fenom",     "target": "plato-gos",        "type": "influence" },
+
+    { "source": "freud-totem",     "target": "freud-nedov",      "type": "parallel" },
+    { "source": "jung-arhetipy",   "target": "freud-totem",      "type": "polemic" },
+    { "source": "frazer",          "target": "tylor",            "type": "develops" },
+    { "source": "malinovski",      "target": "frazer",           "type": "polemic" },
+    { "source": "eliade",          "target": "frazer",           "type": "influence" },
+    { "source": "freud-totem",     "target": "frazer",           "type": "influence" },
+
+    { "source": "adorno-dialektika","target": "benjamin",        "type": "polemic" },
+    { "source": "baudrillard",     "target": "debord",           "type": "develops" },
+    { "source": "baudrillard",     "target": "adorno-dialektika","type": "influence" },
+    { "source": "lyotard",         "target": "baudrillard",      "type": "parallel" },
+    { "source": "debord",          "target": "benjamin",         "type": "influence" },
+    { "source": "ortega",          "target": "adorno-dialektika","type": "parallel" },
+
+    { "source": "gadamer",         "target": "dilthey",          "type": "develops" },
+    { "source": "gadamer",         "target": "hegel-fenom",      "type": "influence" },
+    { "source": "weber-etika",     "target": "simmel-dengi",     "type": "parallel" },
+    { "source": "averintsev",      "target": "lotman-besedy",    "type": "parallel" }
+  ]
+}
+;</script>
+  <script type="module">
+// graph.js — силовая раскладка и отрисовка графа знаний на SVG.
+// Без внешних зависимостей: простая физическая модель (отталкивание + пружины + гравитация).
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+class KnowledgeGraph {
+  constructor(svg, { onSelect } = {}) {
+    this.svg = svg;
+    this.onSelect = onSelect || (() => {});
+    this.nodes = [];
+    this.links = [];
+    this.nodeById = new Map();
+    this.selectedId = null;
+    this.hoverId = null;
+    this.filter = null; // (node) => boolean
+
+    // Слои SVG (порядок = z-index)
+    this.gRoot = el('g');
+    this.gLinks = el('g', { class: 'links' });
+    this.gNodes = el('g', { class: 'nodes' });
+    this.gRoot.append(this.gLinks, this.gNodes);
+    this.svg.append(this.gRoot);
+
+    // Трансформация вида (зум/панорама)
+    this.view = { x: 0, y: 0, k: 1 };
+
+    this._bindInteractions();
+    this._raf = null;
+    this.alpha = 1; // «температура» симуляции
+  }
+
+  setData({ nodes, links }) {
+    const rect = this.svg.getBoundingClientRect();
+    const cx = rect.width / 2 || 500;
+    const cy = rect.height / 2 || 400;
+
+    this.nodes = nodes.map((n, i) => {
+      const angle = (i / nodes.length) * Math.PI * 2;
+      const r = 60 + (i % 7) * 45;
+      return {
+        ...n,
+        x: cx + Math.cos(angle) * r,
+        y: cy + Math.sin(angle) * r,
+        vx: 0, vy: 0,
+      };
+    });
+    this.nodeById = new Map(this.nodes.map((n) => [n.id, n]));
+
+    this.links = links
+      .map((l) => ({
+        ...l,
+        source: this.nodeById.get(l.source),
+        target: this.nodeById.get(l.target),
+      }))
+      .filter((l) => l.source && l.target);
+
+    // степень узла — влияет на размер
+    for (const n of this.nodes) n.degree = 0;
+    for (const l of this.links) { l.source.degree++; l.target.degree++; }
+
+    this._buildDom();
+    this.reheat(1);
+  }
+
+  reheat(alpha = 0.8) {
+    this.alpha = Math.max(this.alpha, alpha);
+    if (!this._raf) this._tick();
+  }
+
+  setFilter(fn) {
+    this.filter = fn;
+    this._applyFilter();
+    this.reheat(0.5);
+  }
+
+  select(id) {
+    this.selectedId = id;
+    this._applyHighlight();
+    this.onSelect(id ? this.nodeById.get(id) : null);
+  }
+
+  // --- Симуляция -----------------------------------------------------------
+  _tick() {
+    this._raf = requestAnimationFrame(() => this._tick());
+    const nodes = this.nodes;
+    const n = nodes.length;
+    if (!n) return;
+
+    const REPULSION = 5200;
+    const SPRING = 0.02;
+    const GRAVITY = 0.015;
+    const DAMPING = 0.86;
+
+    const rect = this.svg.getBoundingClientRect();
+    const cx = rect.width / 2, cy = rect.height / 2;
+
+    // Отталкивание (O(n^2), достаточно для ~70 узлов)
+    for (let i = 0; i < n; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < n; j++) {
+        const b = nodes[j];
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 0.01) { dx = Math.cos(i + j); dy = Math.sin(i + j); d2 = 1; }
+        const d = Math.sqrt(d2);
+        const f = REPULSION / d2;
+        const fx = (dx / d) * f, fy = (dy / d) * f;
+        a.vx += fx; a.vy += fy;
+        b.vx -= fx; b.vy -= fy;
+      }
+    }
+
+    // Пружины связей
+    for (const l of this.links) {
+      const a = l.source, b = l.target;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const rest = l.rest || 110;
+      const f = (d - rest) * SPRING;
+      const fx = (dx / d) * f, fy = (dy / d) * f;
+      a.vx += fx; a.vy += fy;
+      b.vx -= fx; b.vy -= fy;
+    }
+
+    // Гравитация к центру + интегрирование
+    for (const nd of nodes) {
+      if (nd.fixed) { nd.vx = 0; nd.vy = 0; continue; }
+      nd.vx += (cx - nd.x) * GRAVITY;
+      nd.vy += (cy - nd.y) * GRAVITY;
+      nd.vx *= DAMPING; nd.vy *= DAMPING;
+      nd.x += nd.vx * this.alpha;
+      nd.y += nd.vy * this.alpha;
+    }
+
+    this._render();
+
+    this.alpha *= 0.985;
+    if (this.alpha < 0.02 && !this._dragging) {
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
+  }
+
+  // --- DOM -----------------------------------------------------------------
+  _buildDom() {
+    this.gLinks.replaceChildren();
+    this.gNodes.replaceChildren();
+    this.linkEls = new Map();
+    this.nodeEls = new Map();
+
+    for (const l of this.links) {
+      const line = el('line', { class: `link link--${l.type}` });
+      this.gLinks.append(line);
+      this.linkEls.set(l, line);
+    }
+
+    for (const nd of this.nodes) {
+      const g = el('g', { class: `node node--${nd.status || nd.type}`, 'data-id': nd.id });
+      const shape = nd.type === 'theme'
+        ? el('rect', { class: 'node__shape node__shape--theme', rx: 4 })
+        : el('circle', { class: 'node__shape', style: `--node-color:${nd.color}` });
+      const label = el('text', { class: 'node__label' });
+      label.textContent = nd.short || nd.title || nd.name;
+      g.append(shape, label);
+      this.gNodes.append(g);
+      this.nodeEls.set(nd, { g, shape, label });
+
+      g.addEventListener('pointerdown', (e) => this._startDrag(e, nd));
+      g.addEventListener('pointerenter', () => { this.hoverId = nd.id; this._applyHighlight(); });
+      g.addEventListener('pointerleave', () => { this.hoverId = null; this._applyHighlight(); });
+      g.addEventListener('click', (e) => { e.stopPropagation(); this.select(nd.id); });
+    }
+    this._applyFilter();
+    this._applyHighlight();
+  }
+
+  _nodeRadius(nd) {
+    if (nd.type === 'theme') return 0;
+    const base = nd.status === 'read' ? 10 : 8;
+    return base + Math.min(nd.degree || 0, 6) * 1.6;
+  }
+
+  _render() {
+    for (const [l, line] of this.linkEls) {
+      line.setAttribute('x1', l.source.x);
+      line.setAttribute('y1', l.source.y);
+      line.setAttribute('x2', l.target.x);
+      line.setAttribute('y2', l.target.y);
+    }
+    for (const [nd, { g, shape, label }] of this.nodeEls) {
+      g.setAttribute('transform', `translate(${nd.x},${nd.y})`);
+      if (nd.type === 'theme') {
+        const w = (nd.name.length) * 6.2 + 16, h = 20;
+        shape.setAttribute('x', -w / 2); shape.setAttribute('y', -h / 2);
+        shape.setAttribute('width', w); shape.setAttribute('height', h);
+        label.setAttribute('y', 4);
+      } else {
+        const r = this._nodeRadius(nd);
+        shape.setAttribute('r', r);
+        label.setAttribute('y', r + 12);
+      }
+    }
+  }
+
+  _applyFilter() {
+    if (!this.nodeEls) return;
+    for (const [nd, { g }] of this.nodeEls) {
+      const visible = !this.filter || nd.type === 'theme' || this.filter(nd);
+      g.classList.toggle('is-hidden', !visible);
+      nd._visible = visible;
+    }
+    for (const [l, line] of this.linkEls) {
+      const vis = (l.source._visible !== false) && (l.target._visible !== false);
+      line.classList.toggle('is-hidden', !vis);
+    }
+  }
+
+  _applyHighlight() {
+    const active = this.hoverId || this.selectedId;
+    const neighbors = new Set();
+    if (active) {
+      neighbors.add(active);
+      for (const l of this.links) {
+        if (l.source.id === active) neighbors.add(l.target.id);
+        if (l.target.id === active) neighbors.add(l.source.id);
+      }
+    }
+    for (const [nd, { g }] of this.nodeEls) {
+      g.classList.toggle('is-selected', nd.id === this.selectedId);
+      g.classList.toggle('is-dim', !!active && !neighbors.has(nd.id));
+    }
+    for (const [l, line] of this.linkEls) {
+      const on = active && (l.source.id === active || l.target.id === active);
+      line.classList.toggle('is-active', !!on);
+      line.classList.toggle('is-dim', !!active && !on);
+    }
+  }
+
+  // --- Взаимодействие ------------------------------------------------------
+  _bindInteractions() {
+    this.svg.addEventListener('click', () => this.select(null));
+
+    // зум колесом
+    this.svg.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const scale = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+      const rect = this.svg.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      this.view.x = mx - (mx - this.view.x) * scale;
+      this.view.y = my - (my - this.view.y) * scale;
+      this.view.k = Math.max(0.3, Math.min(3, this.view.k * scale));
+      this._applyView();
+    }, { passive: false });
+
+    // панорама фоном
+    let panning = null;
+    this.svg.addEventListener('pointerdown', (e) => {
+      if (e.target === this.svg) panning = { x: e.clientX, y: e.clientY, vx: this.view.x, vy: this.view.y };
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!panning) return;
+      this.view.x = panning.vx + (e.clientX - panning.x);
+      this.view.y = panning.vy + (e.clientY - panning.y);
+      this._applyView();
+    });
+    window.addEventListener('pointerup', () => { panning = null; });
+  }
+
+  _applyView() {
+    this.gRoot.setAttribute('transform', `translate(${this.view.x},${this.view.y}) scale(${this.view.k})`);
+  }
+
+  _startDrag(e, nd) {
+    e.stopPropagation();
+    this._dragging = true;
+    nd.fixed = true;
+    const rect = this.svg.getBoundingClientRect();
+    const toWorld = (cx, cy) => ({
+      x: (cx - rect.left - this.view.x) / this.view.k,
+      y: (cy - rect.top - this.view.y) / this.view.k,
+    });
+    const move = (ev) => {
+      const p = toWorld(ev.clientX, ev.clientY);
+      nd.x = p.x; nd.y = p.y; nd.vx = 0; nd.vy = 0;
+      this.reheat(0.4);
+    };
+    const up = () => {
+      this._dragging = false;
+      nd.fixed = false;
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      this.reheat(0.3);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  resetView() {
+    this.view = { x: 0, y: 0, k: 1 };
+    this._applyView();
+    this.reheat(0.6);
+  }
+}
+
+function el(name, attrs = {}) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
+}
+
+// app.js — загрузка данных, построение графа знаний, фильтры, статистика, боковая панель.
+
+
+const STATUS_ORDER = ['read', 'reading', 'planned', 'unread'];
+
+async function loadData() {
+  // При открытии через http(s) — тянем JSON. При открытии как единый файл —
+  // данные уже встроены в window.__GRAPH_DATA__ (см. dist/index.html).
+  if (window.__GRAPH_DATA__) return window.__GRAPH_DATA__;
+  const res = await fetch('../data/knowledge-graph.json');
+  if (!res.ok) throw new Error('Не удалось загрузить данные (' + res.status + ')');
+  return res.json();
+}
+
+function buildGraphModel(data) {
+  const disciplineById = new Map(data.disciplines.map((d) => [d.id, d]));
+  const statusById = new Map(data.meta.statuses.map((s) => [s.id, s]));
+
+  const nodes = [];
+  for (const b of data.books) {
+    const disc = disciplineById.get(b.discipline);
+    nodes.push({
+      ...b,
+      type: 'book',
+      color: disc ? disc.color : '#888',
+      short: shorten(b.title),
+    });
+  }
+  // темы — узлы-хабы
+  for (const t of data.themes) {
+    nodes.push({ id: 't:' + t.id, name: t.name, type: 'theme' });
+  }
+
+  const links = [...data.links.map((l) => ({ ...l }))];
+  // связи книга—тема
+  for (const b of data.books) {
+    for (const th of b.themes || []) {
+      links.push({ source: b.id, target: 't:' + th, type: 'theme' });
+    }
+  }
+
+  return { nodes, links, disciplineById, statusById };
+}
+
+function shorten(title, max = 22) {
+  if (title.length <= max) return title;
+  return title.slice(0, max - 1).trimEnd() + '…';
+}
+
+function render(data) {
+  document.querySelector('#app-title').textContent = data.meta.title;
+  document.querySelector('#app-subtitle').textContent = data.meta.subtitle;
+  document.querySelector('#app-program').textContent = data.meta.program;
+
+  const model = buildGraphModel(data);
+  const svg = document.querySelector('#graph');
+  const panel = document.querySelector('#detail');
+
+  const graph = new KnowledgeGraph(svg, {
+    onSelect: (node) => showDetail(node, data, model),
+  });
+  graph.setData({ nodes: model.nodes, links: model.links });
+
+  // --- Статистика + фильтры ---
+  buildStats(data);
+  buildFilters(data, graph, model);
+
+  // --- Поиск ---
+  const search = document.querySelector('#search');
+  search.addEventListener('input', () => applyFilters(graph, model, data));
+
+  // --- Кнопки ---
+  document.querySelector('#reset-view').addEventListener('click', () => graph.resetView());
+
+  window.__graph = graph; // для отладки
+  window.__applyFilters = () => applyFilters(graph, model, data);
+}
+
+function buildStats(data) {
+  const counts = countByStatus(data.books);
+  const total = data.books.length;
+  const readShare = Math.round((counts.read / total) * 100);
+
+  const wrap = document.querySelector('#stats');
+  wrap.innerHTML = '';
+  const progress = document.createElement('div');
+  progress.className = 'progress';
+  progress.innerHTML = `
+    <div class="progress__head">
+      <span>Прогресс чтения</span>
+      <strong>${counts.read} / ${total} · ${readShare}%</strong>
+    </div>
+    <div class="progress__bar">
+      ${STATUS_ORDER.map((s) => {
+        const st = data.meta.statuses.find((x) => x.id === s);
+        const pct = (counts[s] / total) * 100;
+        return `<span style="width:${pct}%;background:${st.color}" title="${st.label}: ${counts[s]}"></span>`;
+      }).join('')}
+    </div>`;
+  wrap.append(progress);
+}
+
+function countByStatus(books) {
+  const c = { read: 0, reading: 0, planned: 0, unread: 0 };
+  for (const b of books) c[b.status] = (c[b.status] || 0) + 1;
+  return c;
+}
+
+const activeStatuses = new Set(STATUS_ORDER);
+const activeDisciplines = new Set();
+
+function buildFilters(data, graph, model) {
+  // статусы
+  const sBox = document.querySelector('#filter-status');
+  sBox.innerHTML = '';
+  for (const s of data.meta.statuses) {
+    const label = document.createElement('label');
+    label.className = 'toggle';
+    label.innerHTML = `<input type="checkbox" checked data-status="${s.id}">
+      <i style="background:${s.color}"></i>${s.label}`;
+    label.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) activeStatuses.add(s.id); else activeStatuses.delete(s.id);
+      applyFilters(graph, model, data);
+    });
+    sBox.append(label);
+  }
+
+  // дисциплины
+  const dBox = document.querySelector('#filter-discipline');
+  dBox.innerHTML = '';
+  for (const d of data.disciplines) activeDisciplines.add(d.id);
+  for (const d of data.disciplines) {
+    const label = document.createElement('label');
+    label.className = 'toggle';
+    label.innerHTML = `<input type="checkbox" checked data-disc="${d.id}">
+      <i style="background:${d.color}"></i>${d.name}`;
+    label.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) activeDisciplines.add(d.id); else activeDisciplines.delete(d.id);
+      applyFilters(graph, model, data);
+    });
+    dBox.append(label);
+  }
+}
+
+function applyFilters(graph, model, data) {
+  const q = document.querySelector('#search').value.trim().toLowerCase();
+  graph.setFilter((nd) => {
+    if (nd.type !== 'book') return true;
+    if (!activeStatuses.has(nd.status)) return false;
+    if (!activeDisciplines.has(nd.discipline)) return false;
+    if (q) {
+      const hay = (nd.title + ' ' + nd.author).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function showDetail(node, data, model) {
+  const panel = document.querySelector('#detail');
+  if (!node || node.type === 'theme') {
+    if (node && node.type === 'theme') {
+      const related = data.books.filter((b) => (b.themes || []).includes(node.id.slice(2)));
+      panel.innerHTML = `
+        <div class="detail__kicker">Тема</div>
+        <h2 class="detail__title">${node.name}</h2>
+        <div class="detail__section">
+          <h3>Книги по теме (${related.length})</h3>
+          <ul class="detail__list">
+            ${related.map((b) => `<li><span class="dot dot--${b.status}"></span>${b.title} <em>— ${b.author}</em></li>`).join('')}
+          </ul>
+        </div>`;
+      panel.classList.add('is-open');
+      return;
+    }
+    panel.classList.remove('is-open');
+    panel.innerHTML = emptyDetail();
+    return;
+  }
+
+  const disc = model.disciplineById.get(node.discipline);
+  const status = model.statusById.get(node.status);
+  const connections = data.links
+    .filter((l) => l.source === node.id || l.target === node.id)
+    .map((l) => {
+      const otherId = l.source === node.id ? l.target : l.source;
+      const other = data.books.find((b) => b.id === otherId);
+      const lt = data.meta.linkTypes.find((t) => t.id === l.type);
+      return other ? { title: other.title, author: other.author, rel: lt ? lt.label : l.type, status: other.status } : null;
+    })
+    .filter(Boolean);
+
+  panel.innerHTML = `
+    <div class="detail__kicker" style="color:${disc.color}">${disc.name}</div>
+    <h2 class="detail__title">${node.title}</h2>
+    <div class="detail__author">${node.author}${node.year ? ' · ' + formatYear(node.year) : ''}</div>
+    <div class="detail__status">
+      <span class="badge" style="background:${status.color}">${status.label}</span>
+      ${node.rating ? `<span class="rating">${'★'.repeat(node.rating)}${'☆'.repeat(5 - node.rating)}</span>` : ''}
+    </div>
+    ${node.note ? `<p class="detail__note">${node.note}</p>` : ''}
+    ${node.themes && node.themes.length ? `
+      <div class="detail__section">
+        <h3>Темы</h3>
+        <div class="tags">${node.themes.map((t) => {
+          const th = data.themes.find((x) => x.id === t);
+          return `<span class="tag">${th ? th.name : t}</span>`;
+        }).join('')}</div>
+      </div>` : ''}
+    ${connections.length ? `
+      <div class="detail__section">
+        <h3>Интеллектуальные связи (${connections.length})</h3>
+        <ul class="detail__list">
+          ${connections.map((c) => `<li><span class="dot dot--${c.status}"></span><span class="rel">${c.rel}:</span> ${c.title} <em>— ${c.author}</em></li>`).join('')}
+        </ul>
+      </div>` : ''}`;
+  panel.classList.add('is-open');
+}
+
+function formatYear(y) {
+  return y < 0 ? Math.abs(y) + ' до н. э.' : String(y);
+}
+
+function emptyDetail() {
+  return `<div class="detail__empty">
+    <p>Выберите книгу в графе, чтобы увидеть автора, статус чтения, заметку и связи с другими текстами.</p>
+    <p class="muted">Наведите курсор на узел — подсветятся его соседи. Тяните узлы, крутите колесо для зума, тяните фон для панорамы.</p>
+  </div>`;
+}
+
+
+render(window.__GRAPH_DATA__);
+</script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "title": "Граф знаний культуролога",
+    "subtitle": "Модель знаний студента: прочитанные и непрочитанные книги",
+    "program": "Культурология · философский факультет МГУ им. М. В. Ломоносова",
+    "updated": "2026-07-14",
+    "statuses": [
+      { "id": "read",    "label": "Прочитано",    "color": "#2f9e6f" },
+      { "id": "reading", "label": "Читаю сейчас",  "color": "#e0a92e" },
+      { "id": "planned", "label": "В планах",      "color": "#4a7bd0" },
+      { "id": "unread",  "label": "Не прочитано",  "color": "#8a8f99" }
+    ],
+    "linkTypes": [
+      { "id": "develops",     "label": "развивает идеи" },
+      { "id": "influence",    "label": "испытал влияние" },
+      { "id": "polemic",      "label": "полемизирует" },
+      { "id": "parallel",     "label": "перекликается" },
+      { "id": "prerequisite", "label": "предшествует" }
+    ]
+  },
+
+  "disciplines": [
+    { "id": "teoriya-kultury",    "name": "Теория и история культурологии", "color": "#c0504d" },
+    { "id": "filosofiya-kultury", "name": "Философия культуры",              "color": "#8064a2" },
+    { "id": "semiotika",          "name": "Семиотика культуры",              "color": "#4bacc6" },
+    { "id": "antropologiya",      "name": "Культурная антропология",         "color": "#4f81bd" },
+    { "id": "estetika",           "name": "Эстетика",                        "color": "#e07b39" },
+    { "id": "filosofiya-mifa",    "name": "Философия мифа и религии",        "color": "#9bbb59" },
+    { "id": "sociologiya-kultury","name": "Социология культуры",             "color": "#c99a2e" },
+    { "id": "istoriya-filosofii", "name": "История философии",               "color": "#7f6084" },
+    { "id": "postmodern",         "name": "Современные теории (постмодерн)", "color": "#d24b6a" },
+    { "id": "istoriya-kultury",   "name": "История мировой культуры",        "color": "#5a8f7b" }
+  ],
+
+  "themes": [
+    { "id": "morfologiya",     "name": "Морфология культуры" },
+    { "id": "znak-simvol",     "name": "Знак и символ" },
+    { "id": "mif",             "name": "Миф" },
+    { "id": "civilizacii",     "name": "Теория цивилизаций" },
+    { "id": "igra",            "name": "Игра как феномен культуры" },
+    { "id": "vlast-diskurs",   "name": "Власть и дискурс" },
+    { "id": "massovaya",       "name": "Массовая культура" },
+    { "id": "telesnost",       "name": "Телесность и карнавал" },
+    { "id": "struktura",       "name": "Структурализм" },
+    { "id": "germenevtika",    "name": "Герменевтика" }
+  ],
+
+  "books": [
+    { "id": "kagan-fk",        "title": "Философия культуры",                 "author": "М. С. Каган",        "year": 1996, "status": "read",    "rating": 4, "discipline": "filosofiya-kultury", "themes": ["morfologiya"], "note": "Системный курс. Отправная точка для понимания культуры как целостности." },
+    { "id": "flier",          "title": "Культурология для культурологов",     "author": "А. Я. Флиер",        "year": 2000, "status": "read",    "rating": 3, "discipline": "teoriya-kultury",    "themes": ["morfologiya"], "note": "Обзор дисциплины и её понятийного аппарата." },
+    { "id": "gurevich-fk",    "title": "Философия культуры",                  "author": "П. С. Гуревич",      "year": 1994, "status": "read",    "rating": 3, "discipline": "filosofiya-kultury", "themes": [], "note": "Учебник, хорошо для повторения перед экзаменом." },
+    { "id": "mezhuev",        "title": "Идея культуры",                       "author": "В. М. Межуев",       "year": 2006, "status": "planned", "discipline": "filosofiya-kultury", "themes": [], "note": "Русская традиция философии культуры." },
+
+    { "id": "lotman-semiosfera", "title": "Семиосфера",                       "author": "Ю. М. Лотман",       "year": 2000, "status": "read",    "rating": 5, "discipline": "semiotika", "themes": ["znak-simvol", "struktura"], "note": "Ключевой текст. Понятие семиосферы как культурного пространства." },
+    { "id": "lotman-vzryv",   "title": "Культура и взрыв",                    "author": "Ю. М. Лотман",       "year": 1992, "status": "reading", "discipline": "semiotika", "themes": ["znak-simvol"], "note": "Динамика культуры: предсказуемое и взрывное." },
+    { "id": "lotman-besedy",  "title": "Беседы о русской культуре",           "author": "Ю. М. Лотман",       "year": 1994, "status": "read",    "rating": 5, "discipline": "istoriya-kultury", "themes": [], "note": "Быт и традиции русского дворянства как знаковая система." },
+    { "id": "uspensky",       "title": "Семиотика искусства",                 "author": "Б. А. Успенский",    "year": 1995, "status": "planned", "discipline": "semiotika", "themes": ["znak-simvol"], "note": "Поэтика композиции, точка зрения в тексте." },
+
+    { "id": "spengler",       "title": "Закат Европы",                        "author": "О. Шпенглер",        "year": 1918, "status": "reading", "discipline": "filosofiya-kultury", "themes": ["civilizacii", "morfologiya"], "note": "Морфология мировой истории; культура vs. цивилизация." },
+    { "id": "toynbee",        "title": "Постижение истории",                  "author": "А. Дж. Тойнби",      "year": 1934, "status": "planned", "discipline": "filosofiya-kultury", "themes": ["civilizacii"], "note": "Вызов-и-ответ, локальные цивилизации." },
+    { "id": "danilevsky",     "title": "Россия и Европа",                     "author": "Н. Я. Данилевский",  "year": 1869, "status": "unread",  "discipline": "filosofiya-kultury", "themes": ["civilizacii"], "note": "Культурно-исторические типы; предтеча Шпенглера." },
+
+    { "id": "huizinga-ludens","title": "Homo Ludens. Человек играющий",       "author": "Й. Хёйзинга",        "year": 1938, "status": "read",    "rating": 5, "discipline": "antropologiya", "themes": ["igra"], "note": "Игра как источник и форма культуры." },
+    { "id": "huizinga-osen",  "title": "Осень Средневековья",                 "author": "Й. Хёйзинга",        "year": 1919, "status": "planned", "discipline": "istoriya-kultury", "themes": [], "note": "Формы жизни и мышления позднего Средневековья." },
+
+    { "id": "cassirer-sf",    "title": "Философия символических форм",         "author": "Э. Кассирер",        "year": 1923, "status": "reading", "discipline": "filosofiya-kultury", "themes": ["znak-simvol", "mif"], "note": "Человек как animal symbolicum; миф, язык, наука." },
+    { "id": "cassirer-opyt",  "title": "Опыт о человеке",                     "author": "Э. Кассирер",        "year": 1944, "status": "read",    "rating": 4, "discipline": "filosofiya-kultury", "themes": ["znak-simvol"], "note": "Краткое изложение символической концепции." },
+
+    { "id": "geertz",         "title": "Интерпретация культур",               "author": "К. Гирц",            "year": 1973, "status": "read",    "rating": 4, "discipline": "antropologiya", "themes": [], "note": "Насыщенное описание; культура как текст." },
+
+    { "id": "bakhtin-rable",  "title": "Творчество Франсуа Рабле",            "author": "М. М. Бахтин",       "year": 1965, "status": "read",    "rating": 5, "discipline": "estetika", "themes": ["telesnost"], "note": "Карнавал, смеховая культура, гротескное тело." },
+    { "id": "bakhtin-slovo",  "title": "Эстетика словесного творчества",      "author": "М. М. Бахтин",       "year": 1979, "status": "planned", "discipline": "estetika", "themes": [], "note": "Диалог, автор и герой, хронотоп." },
+
+    { "id": "levistrauss-str","title": "Структурная антропология",            "author": "К. Леви-Стросс",     "year": 1958, "status": "read",    "rating": 4, "discipline": "antropologiya", "themes": ["struktura", "mif"], "note": "Метод структурного анализа мифа и родства." },
+    { "id": "levistrauss-mysl","title": "Первобытное мышление",               "author": "К. Леви-Стросс",     "year": 1962, "status": "planned", "discipline": "antropologiya", "themes": ["mif", "struktura"], "note": "Бриколаж, логика конкретного." },
+
+    { "id": "barthes-mif",    "title": "Мифологии",                           "author": "Р. Барт",            "year": 1957, "status": "read",    "rating": 4, "discipline": "semiotika", "themes": ["mif", "massovaya"], "note": "Миф как вторичная семиологическая система." },
+    { "id": "barthes-sz",     "title": "S/Z",                                 "author": "Р. Барт",            "year": 1970, "status": "unread",  "discipline": "semiotika", "themes": ["struktura"], "note": "Пять кодов, читаемое и писуемое." },
+
+    { "id": "foucault-slova", "title": "Слова и вещи",                        "author": "М. Фуко",            "year": 1966, "status": "reading", "discipline": "postmodern", "themes": ["vlast-diskurs", "struktura"], "note": "Эпистемы, археология гуманитарных наук." },
+    { "id": "foucault-nadzor","title": "Надзирать и наказывать",              "author": "М. Фуко",            "year": 1975, "status": "planned", "discipline": "postmodern", "themes": ["vlast-diskurs"], "note": "Дисциплинарная власть, паноптикум." },
+
+    { "id": "nietzsche-trag", "title": "Рождение трагедии из духа музыки",    "author": "Ф. Ницше",           "year": 1872, "status": "read",    "rating": 5, "discipline": "estetika", "themes": ["mif"], "note": "Аполлоническое и дионисийское." },
+
+    { "id": "freud-nedov",    "title": "Недовольство культурой",              "author": "З. Фрейд",           "year": 1930, "status": "read",    "rating": 4, "discipline": "filosofiya-kultury", "themes": [], "note": "Культура как отказ от влечений." },
+    { "id": "freud-totem",    "title": "Тотем и табу",                        "author": "З. Фрейд",           "year": 1913, "status": "planned", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Психоанализ происхождения религии и морали." },
+
+    { "id": "jung-arhetipy",  "title": "Архетипы и коллективное бессознательное","author": "К. Г. Юнг",       "year": 1934, "status": "reading", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Архетипы, коллективное бессознательное." },
+
+    { "id": "tylor",          "title": "Первобытная культура",                "author": "Э. Б. Тайлор",       "year": 1871, "status": "read",    "rating": 3, "discipline": "antropologiya", "themes": [], "note": "Анимизм, эволюционизм, определение культуры." },
+    { "id": "frazer",         "title": "Золотая ветвь",                       "author": "Дж. Фрэзер",         "year": 1890, "status": "reading", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Магия, религия, наука; умирающий и воскресающий бог." },
+    { "id": "malinovski",     "title": "Научная теория культуры",             "author": "Б. Малиновский",     "year": 1944, "status": "planned", "discipline": "antropologiya", "themes": [], "note": "Функционализм, культура как ответ на потребности." },
+
+    { "id": "weber-etika",    "title": "Протестантская этика и дух капитализма","author": "М. Вебер",         "year": 1905, "status": "read",    "rating": 4, "discipline": "sociologiya-kultury", "themes": [], "note": "Религиозная этика и хозяйственный этос." },
+    { "id": "simmel-dengi",   "title": "Философия денег",                     "author": "Г. Зиммель",         "year": 1900, "status": "unread",  "discipline": "sociologiya-kultury", "themes": [], "note": "Деньги как культурная форма." },
+
+    { "id": "gadamer",        "title": "Истина и метод",                      "author": "Х.-Г. Гадамер",      "year": 1960, "status": "planned", "discipline": "istoriya-filosofii", "themes": ["germenevtika"], "note": "Философская герменевтика, слияние горизонтов." },
+    { "id": "dilthey",        "title": "Введение в науки о духе",             "author": "В. Дильтей",         "year": 1883, "status": "unread",  "discipline": "istoriya-filosofii", "themes": ["germenevtika"], "note": "Понимание vs. объяснение." },
+
+    { "id": "benjamin",       "title": "Произведение искусства в эпоху его технической воспроизводимости", "author": "В. Беньямин", "year": 1936, "status": "read", "rating": 5, "discipline": "postmodern", "themes": ["massovaya"], "note": "Утрата ауры, репродукция." },
+    { "id": "adorno-dialektika","title": "Диалектика Просвещения",            "author": "Т. Адорно, М. Хоркхаймер","year": 1947,"status": "reading","discipline": "postmodern", "themes": ["massovaya"], "note": "Культуриндустрия, оборотная сторона разума." },
+    { "id": "baudrillard",    "title": "Симулякры и симуляция",               "author": "Ж. Бодрийяр",        "year": 1981, "status": "read",    "rating": 4, "discipline": "postmodern", "themes": ["massovaya", "znak-simvol"], "note": "Гиперреальность, порядок симулякров." },
+    { "id": "lyotard",        "title": "Состояние постмодерна",               "author": "Ж.-Ф. Лиотар",       "year": 1979, "status": "planned", "discipline": "postmodern", "themes": [], "note": "Недоверие к метанарративам." },
+    { "id": "debord",        "title": "Общество спектакля",                   "author": "Г. Дебор",           "year": 1967, "status": "planned", "discipline": "postmodern", "themes": ["massovaya"], "note": "Спектакль как отношение между людьми, опосредованное образами." },
+
+    { "id": "eco-struktura",  "title": "Отсутствующая структура",             "author": "У. Эко",             "year": 1968, "status": "planned", "discipline": "semiotika", "themes": ["struktura", "znak-simvol"], "note": "Введение в семиологию." },
+
+    { "id": "losev-mif",      "title": "Диалектика мифа",                     "author": "А. Ф. Лосев",        "year": 1930, "status": "read",    "rating": 5, "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Миф не выдумка, а живая реальность личности." },
+    { "id": "losev-vozr",     "title": "Эстетика Возрождения",                "author": "А. Ф. Лосев",        "year": 1978, "status": "unread",  "discipline": "estetika", "themes": [], "note": "Оборотная сторона титанизма." },
+
+    { "id": "averintsev",     "title": "Поэтика ранневизантийской литературы", "author": "С. С. Аверинцев",    "year": 1977, "status": "planned", "discipline": "istoriya-kultury", "themes": [], "note": "Слово и образ на границе античности и Средневековья." },
+
+    { "id": "kant-sud",       "title": "Критика способности суждения",        "author": "И. Кант",            "year": 1790, "status": "reading", "discipline": "estetika", "themes": [], "note": "Прекрасное, возвышенное, целесообразность." },
+    { "id": "hegel-fenom",    "title": "Феноменология духа",                  "author": "Г. В. Ф. Гегель",    "year": 1807, "status": "unread",  "discipline": "istoriya-filosofii", "themes": [], "note": "Движение духа к абсолютному знанию." },
+    { "id": "herder",         "title": "Идеи к философии истории человечества","author": "И. Г. Гердер",       "year": 1784, "status": "planned", "discipline": "filosofiya-kultury", "themes": [], "note": "Дух народа, историзм в понимании культур." },
+    { "id": "vico",           "title": "Основания новой науки",               "author": "Дж. Вико",           "year": 1725, "status": "unread",  "discipline": "istoriya-filosofii", "themes": ["civilizacii"], "note": "Круговорот наций, поэтическая мудрость." },
+
+    { "id": "plato-gos",      "title": "Государство",                         "author": "Платон",             "year": -375, "status": "read",    "rating": 4, "discipline": "istoriya-filosofii", "themes": [], "note": "Идеи, справедливость, роль искусства в полисе." },
+    { "id": "aristotle-poet", "title": "Поэтика",                             "author": "Аристотель",         "year": -335, "status": "read",    "rating": 4, "discipline": "estetika", "themes": [], "note": "Мимесис, катарсис, трагедия." },
+
+    { "id": "ortega",         "title": "Восстание масс",                      "author": "Х. Ортега-и-Гассет", "year": 1930, "status": "read",    "rating": 4, "discipline": "sociologiya-kultury", "themes": ["massovaya"], "note": "Человек массы и элита." },
+    { "id": "eliade",         "title": "Священное и мирское",                 "author": "М. Элиаде",          "year": 1957, "status": "reading", "discipline": "filosofiya-mifa", "themes": ["mif"], "note": "Иерофания, сакральное время и пространство." }
+  ],
+
+  "links": [
+    { "source": "spengler",        "target": "danilevsky",       "type": "develops" },
+    { "source": "toynbee",         "target": "spengler",         "type": "polemic" },
+    { "source": "spengler",        "target": "herder",           "type": "influence" },
+    { "source": "herder",          "target": "vico",             "type": "develops" },
+
+    { "source": "kagan-fk",        "target": "hegel-fenom",      "type": "influence" },
+    { "source": "flier",           "target": "kagan-fk",         "type": "develops" },
+    { "source": "gurevich-fk",     "target": "kagan-fk",         "type": "parallel" },
+    { "source": "kagan-fk",        "target": "mezhuev",          "type": "parallel" },
+
+    { "source": "lotman-vzryv",    "target": "lotman-semiosfera","type": "develops" },
+    { "source": "lotman-semiosfera","target": "levistrauss-str", "type": "influence" },
+    { "source": "uspensky",        "target": "lotman-semiosfera","type": "parallel" },
+    { "source": "barthes-mif",     "target": "levistrauss-str",  "type": "influence" },
+    { "source": "barthes-sz",      "target": "barthes-mif",      "type": "develops" },
+    { "source": "levistrauss-mysl","target": "levistrauss-str",  "type": "develops" },
+    { "source": "eco-struktura",   "target": "levistrauss-str",  "type": "influence" },
+    { "source": "eco-struktura",   "target": "barthes-sz",       "type": "parallel" },
+
+    { "source": "foucault-nadzor", "target": "foucault-slova",   "type": "develops" },
+    { "source": "foucault-slova",  "target": "nietzsche-trag",   "type": "influence" },
+
+    { "source": "cassirer-opyt",   "target": "cassirer-sf",      "type": "develops" },
+    { "source": "cassirer-sf",     "target": "kant-sud",         "type": "influence" },
+    { "source": "losev-mif",       "target": "cassirer-sf",      "type": "parallel" },
+    { "source": "barthes-mif",     "target": "losev-mif",        "type": "parallel" },
+
+    { "source": "huizinga-osen",   "target": "huizinga-ludens",  "type": "parallel" },
+    { "source": "huizinga-ludens", "target": "geertz",           "type": "influence" },
+    { "source": "geertz",          "target": "weber-etika",      "type": "influence" },
+    { "source": "geertz",          "target": "levistrauss-str",  "type": "polemic" },
+
+    { "source": "bakhtin-slovo",   "target": "bakhtin-rable",    "type": "develops" },
+    { "source": "nietzsche-trag",  "target": "aristotle-poet",   "type": "polemic" },
+    { "source": "kant-sud",        "target": "aristotle-poet",   "type": "influence" },
+    { "source": "aristotle-poet",  "target": "plato-gos",        "type": "polemic" },
+    { "source": "hegel-fenom",     "target": "plato-gos",        "type": "influence" },
+
+    { "source": "freud-totem",     "target": "freud-nedov",      "type": "parallel" },
+    { "source": "jung-arhetipy",   "target": "freud-totem",      "type": "polemic" },
+    { "source": "frazer",          "target": "tylor",            "type": "develops" },
+    { "source": "malinovski",      "target": "frazer",           "type": "polemic" },
+    { "source": "eliade",          "target": "frazer",           "type": "influence" },
+    { "source": "freud-totem",     "target": "frazer",           "type": "influence" },
+
+    { "source": "adorno-dialektika","target": "benjamin",        "type": "polemic" },
+    { "source": "baudrillard",     "target": "debord",           "type": "develops" },
+    { "source": "baudrillard",     "target": "adorno-dialektika","type": "influence" },
+    { "source": "lyotard",         "target": "baudrillard",      "type": "parallel" },
+    { "source": "debord",          "target": "benjamin",         "type": "influence" },
+    { "source": "ortega",          "target": "adorno-dialektika","type": "parallel" },
+
+    { "source": "gadamer",         "target": "dilthey",          "type": "develops" },
+    { "source": "gadamer",         "target": "hegel-fenom",      "type": "influence" },
+    { "source": "weber-etika",     "target": "simmel-dengi",     "type": "parallel" },
+    { "source": "averintsev",      "target": "lotman-besedy",    "type": "parallel" }
+  ]
+}
