@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Граф знаний культуролога</title>
   <style>
+/* Тёмная тема — база по умолчанию. Светлая — через :root[data-theme="light"].
+   Тему выбирает пользователь (кнопка в шапке) или ОС (prefers-color-scheme). */
 :root {
   --bg: #14161c;
   --bg-panel: #1c1f28;
@@ -13,7 +15,70 @@
   --text: #e8eaf0;
   --muted: #969cad;
   --accent: #7aa2f7;
+
+  --header-1: #1a1d26;
+  --header-2: #14161c;
+  --graph-1: #191c25;
+  --graph-2: #14161c;
+
+  --node-outline: #0e1015;
+  --node-label: #c7ccd8;
+  --node-label-dim: #7d8394;
+  --label-halo: #14161c;
+  --surface-fill: #14161c;
+  --sel-stroke: #ffffff;
+
+  --link: #3a4152;
+  --link-theme: #4b556b;
+  --theme-fill: #2b3550;
+  --theme-stroke: #5b6b8f;
+
+  --kw-fill: #b48ead;
+  --kw-label: #d9c4e0;
+  --note-link: #8f6ba8;
+  --wikilink: #cda9e0;
+
+  --idea-text: #d5dae6;
+  --note-text: #cfd4e0;
+  --good: #2f9e6f;
+
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", "PT Sans", Arial, sans-serif;
+}
+
+:root[data-theme="light"] {
+  --bg: #f5f6f8;
+  --bg-panel: #ffffff;
+  --bg-elev: #eceff4;
+  --line: #dde1e9;
+  --text: #1f242d;
+  --muted: #616776;
+  --accent: #3866c9;
+
+  --header-1: #ffffff;
+  --header-2: #eef1f5;
+  --graph-1: #ffffff;
+  --graph-2: #e9edf3;
+
+  --node-outline: #ffffff;
+  --node-label: #3a414d;
+  --node-label-dim: #98a0b0;
+  --label-halo: #f0f2f6;
+  --surface-fill: #ffffff;
+  --sel-stroke: #1f242d;
+
+  --link: #aab3c2;
+  --link-theme: #97a3b8;
+  --theme-fill: #dde6f5;
+  --theme-stroke: #8ea4c8;
+
+  --kw-fill: #9256b0;
+  --kw-label: #6a3f86;
+  --note-link: #a982c4;
+  --wikilink: #8a4fb0;
+
+  --idea-text: #2b323e;
+  --note-text: #363d49;
+  --good: #1f8a5b;
 }
 
 * { box-sizing: border-box; }
@@ -36,13 +101,26 @@ body {
 /* ---- Шапка ---- */
 header {
   grid-area: header;
-  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 22px;
   border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, #1a1d26, #14161c);
+  background: linear-gradient(180deg, var(--header-1), var(--header-2));
 }
 #app-title { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: .2px; }
 #app-subtitle { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
 #app-program { margin: 4px 0 0; font-size: 12px; color: var(--accent); }
+
+#theme-toggle {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: 20px;
+  border: 1px solid var(--line); background: var(--bg-elev);
+  color: var(--text); font-size: 12.5px; cursor: pointer;
+}
+#theme-toggle:hover { border-color: var(--accent); }
 
 /* ---- Боковая панель фильтров ---- */
 aside.sidebar {
@@ -104,6 +182,7 @@ aside.sidebar {
   background: var(--bg-elev);
 }
 .progress__bar span { height: 100%; }
+.progress__hint { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.45; }
 
 button.btn {
   margin-top: 18px;
@@ -120,16 +199,16 @@ button.btn:hover { border-color: var(--accent); }
 
 /* ---- Граф ---- */
 main.graph-wrap { grid-area: graph; position: relative; overflow: hidden; }
-#graph { width: 100%; height: 100%; display: block; cursor: grab; background:
-  radial-gradient(circle at 50% 40%, #191c25 0%, #14161c 70%); }
+#graph { width: 100%; height: 100%; display: block; cursor: grab;
+  background: radial-gradient(circle at 50% 40%, var(--graph-1) 0%, var(--graph-2) 70%); }
 #graph:active { cursor: grabbing; }
 
 .link {
-  stroke: #3a4152;
+  stroke: var(--link);
   stroke-width: 1;
   stroke-opacity: .55;
 }
-.link--theme { stroke: #4b556b; stroke-dasharray: 3 3; stroke-opacity: .4; }
+.link--theme { stroke: var(--link-theme); stroke-dasharray: 3 3; stroke-opacity: .4; }
 .link--polemic { stroke: #b5556b; }
 .link--develops { stroke: #4f7bc0; }
 .link.is-active { stroke-opacity: 1; stroke-width: 2; }
@@ -139,26 +218,26 @@ main.graph-wrap { grid-area: graph; position: relative; overflow: hidden; }
 .node { cursor: pointer; }
 .node__shape {
   fill: var(--node-color, #6b7280);
-  stroke: #0e1015;
+  stroke: var(--node-outline);
   stroke-width: 1.5;
   transition: opacity .15s;
 }
 .node__label {
-  fill: #c7ccd8;
+  fill: var(--node-label);
   font-size: 9px;
   text-anchor: middle;
   pointer-events: none;
   paint-order: stroke;
-  stroke: #14161c;
+  stroke: var(--label-halo);
   stroke-width: 2.5px;
 }
 .node__shape--theme {
-  fill: #2b3550;
-  stroke: #5b6b8f;
+  fill: var(--theme-fill);
+  stroke: var(--theme-stroke);
   stroke-width: 1;
 }
 .node.is-dim { opacity: .18; }
-.node.is-selected .node__shape { stroke: #fff; stroke-width: 2.5; }
+.node.is-selected .node__shape { stroke: var(--sel-stroke); stroke-width: 2.5; }
 .node.is-hidden { display: none; }
 
 /* Визуальный статус чтения */
@@ -166,21 +245,20 @@ main.graph-wrap { grid-area: graph; position: relative; overflow: hidden; }
 .node--reading .node__shape { fill: var(--node-color); stroke: #e0a92e; stroke-width: 2.5; }
 .node--planned .node__shape { fill: var(--node-color); fill-opacity: .5; }
 .node--unread .node__shape  {
-  fill: #14161c; stroke: var(--node-color); stroke-width: 1.5;
+  fill: var(--surface-fill); stroke: var(--node-color); stroke-width: 1.5;
   stroke-dasharray: 2.5 2.5;
 }
-.node--unread .node__label { fill: #7d8394; }
+.node--unread .node__label { fill: var(--node-label-dim); }
 
 /* Ключевые слова из конспектов (личный слой, как в Obsidian) */
 .node__shape--keyword {
-  fill: #b48ead;
-  stroke: #14161c;
+  fill: var(--kw-fill);
+  stroke: var(--node-outline);
   stroke-width: 1.5;
 }
-.node--keyword .node__label { fill: #d9c4e0; font-style: italic; }
-.link--note { stroke: #8f6ba8; stroke-opacity: .6; }
-/* Метка: у узла есть мой конспект */
-.node.has-note .node__shape { filter: drop-shadow(0 0 3.5px #b48ead); }
+.node--keyword .node__label { fill: var(--kw-label); font-style: italic; }
+.link--note { stroke: var(--note-link); stroke-opacity: .6; }
+.node.has-note .node__shape { filter: drop-shadow(0 0 3.5px var(--kw-fill)); }
 
 /* ---- Панель деталей ---- */
 aside.detail {
@@ -191,15 +269,15 @@ aside.detail {
   overflow-y: auto;
 }
 .detail__empty { color: var(--muted); font-size: 13px; line-height: 1.6; }
-.detail__empty .muted { color: #6b7180; font-size: 12px; margin-top: 14px; }
+.detail__empty .muted { color: var(--muted); font-size: 12px; margin-top: 14px; }
 .detail__kicker { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
 .detail__title { margin: 6px 0 2px; font-size: 19px; line-height: 1.3; }
 .detail__author { color: var(--muted); font-size: 13px; }
-.detail__status { display: flex; align-items: center; gap: 10px; margin: 12px 0; }
+.detail__status { display: flex; align-items: center; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
 .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; color: #10130f; font-weight: 600; }
 .rating { color: #e0a92e; font-size: 13px; letter-spacing: 1px; }
 .detail__note {
-  font-size: 13px; line-height: 1.55; color: #cfd4e0;
+  font-size: 13px; line-height: 1.55; color: var(--note-text);
   border-left: 2px solid var(--line); padding-left: 12px; margin: 14px 0;
 }
 .detail__section { margin-top: 18px; }
@@ -225,10 +303,19 @@ aside.detail {
 .muted { color: var(--muted); }
 code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
 
-/* Основные идеи книги */
-.detail__idea {
-  font-size: 13px; line-height: 1.62; color: #d5dae6; margin: 14px 0;
+/* Выбор статуса чтения в карточке книги */
+.status-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.status-btn {
+  font-size: 12px; padding: 5px 10px; border-radius: 20px;
+  border: 1px solid var(--line); background: var(--bg-elev);
+  color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
 }
+.status-btn i { width: 9px; height: 9px; border-radius: 50%; }
+.status-btn:hover { border-color: var(--accent); }
+.status-btn.is-active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); font-weight: 600; }
+
+/* Основные идеи книги */
+.detail__idea { font-size: 13px; line-height: 1.62; color: var(--idea-text); margin: 14px 0; }
 .detail__idea p { margin: 0 0 10px; }
 
 /* Кнопки экспорт/импорт */
@@ -245,19 +332,12 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
 }
 .note-editor:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
 .note-hint { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; }
-.note-hint b { color: #b48ead; font-weight: 600; }
-.note-rendered {
-  font-size: 13px; line-height: 1.6; color: #cfd4e0;
-  margin-top: 12px; white-space: pre-wrap;
-}
-.wikilink {
-  color: #cda9e0; cursor: pointer; border-bottom: 1px dashed #8f6ba8;
-}
-.wikilink:hover { color: #e6d4f2; }
-.wikilink--new { color: #9aa0b0; border-bottom-style: dotted; }
+.note-hint b { color: var(--kw-fill); font-weight: 600; }
+.wikilink { color: var(--wikilink); cursor: pointer; border-bottom: 1px dashed var(--note-link); }
+.wikilink:hover { filter: brightness(1.15); }
 .backlink { cursor: pointer; }
 .backlink:hover .b-title { color: var(--accent); }
-.saved-flag { color: #2f9e6f; font-size: 11px; margin-left: 8px; opacity: 0; transition: opacity .2s; }
+.saved-flag { color: var(--good); font-size: 11px; margin-left: 8px; opacity: 0; transition: opacity .2s; }
 .saved-flag.show { opacity: 1; }
 
 /* адаптив */
@@ -271,9 +351,12 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
 </head>
 <body>
   <header>
-    <h1 id="app-title">Граф знаний</h1>
-    <p id="app-subtitle">Модель знаний студента</p>
-    <p id="app-program"></p>
+    <div class="header__titles">
+      <h1 id="app-title">Граф знаний</h1>
+      <p id="app-subtitle">Модель знаний студента</p>
+      <p id="app-program"></p>
+    </div>
+    <button id="theme-toggle" type="button" title="Переключить тему"><span id="theme-icon">🌙</span><span id="theme-label">Тёмная</span></button>
   </header>
 
   <aside class="sidebar">
@@ -486,7 +569,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Философия культуры",
       "author": "М. С. Каган",
       "year": 1996,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "filosofiya-kultury",
       "themes": [
@@ -500,7 +583,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Культурология для культурологов",
       "author": "А. Я. Флиер",
       "year": 2000,
-      "status": "read",
+      "status": "unread",
       "rating": 3,
       "discipline": "teoriya-kultury",
       "themes": [
@@ -514,7 +597,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Философия культуры",
       "author": "П. С. Гуревич",
       "year": 1994,
-      "status": "read",
+      "status": "unread",
       "rating": 3,
       "discipline": "filosofiya-kultury",
       "themes": [],
@@ -526,7 +609,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Идея культуры",
       "author": "В. М. Межуев",
       "year": 2006,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-kultury",
       "themes": [],
       "note": "Русская традиция философии культуры.",
@@ -537,7 +620,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Семиосфера",
       "author": "Ю. М. Лотман",
       "year": 2000,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "semiotika",
       "themes": [
@@ -552,7 +635,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Культура и взрыв",
       "author": "Ю. М. Лотман",
       "year": 1992,
-      "status": "reading",
+      "status": "unread",
       "discipline": "semiotika",
       "themes": [
         "znak-simvol"
@@ -565,7 +648,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Беседы о русской культуре",
       "author": "Ю. М. Лотман",
       "year": 1994,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "istoriya-kultury",
       "themes": [],
@@ -577,7 +660,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Семиотика искусства",
       "author": "Б. А. Успенский",
       "year": 1995,
-      "status": "planned",
+      "status": "unread",
       "discipline": "semiotika",
       "themes": [
         "znak-simvol"
@@ -590,7 +673,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Закат Европы",
       "author": "О. Шпенглер",
       "year": 1918,
-      "status": "reading",
+      "status": "unread",
       "discipline": "filosofiya-kultury",
       "themes": [
         "civilizacii",
@@ -604,7 +687,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Постижение истории",
       "author": "А. Дж. Тойнби",
       "year": 1934,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-kultury",
       "themes": [
         "civilizacii"
@@ -630,7 +713,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Homo Ludens. Человек играющий",
       "author": "Й. Хёйзинга",
       "year": 1938,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "antropologiya",
       "themes": [
@@ -644,7 +727,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Осень Средневековья",
       "author": "Й. Хёйзинга",
       "year": 1919,
-      "status": "planned",
+      "status": "unread",
       "discipline": "istoriya-kultury",
       "themes": [],
       "note": "Формы жизни и мышления позднего Средневековья.",
@@ -655,7 +738,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Философия символических форм",
       "author": "Э. Кассирер",
       "year": 1923,
-      "status": "reading",
+      "status": "unread",
       "discipline": "filosofiya-kultury",
       "themes": [
         "znak-simvol",
@@ -669,7 +752,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Опыт о человеке",
       "author": "Э. Кассирер",
       "year": 1944,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "filosofiya-kultury",
       "themes": [
@@ -683,7 +766,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Интерпретация культур",
       "author": "К. Гирц",
       "year": 1973,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "antropologiya",
       "themes": [],
@@ -695,7 +778,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Творчество Франсуа Рабле",
       "author": "М. М. Бахтин",
       "year": 1965,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "estetika",
       "themes": [
@@ -709,7 +792,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Эстетика словесного творчества",
       "author": "М. М. Бахтин",
       "year": 1979,
-      "status": "planned",
+      "status": "unread",
       "discipline": "estetika",
       "themes": [],
       "note": "Диалог, автор и герой, хронотоп.",
@@ -720,7 +803,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Структурная антропология",
       "author": "К. Леви-Стросс",
       "year": 1958,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "antropologiya",
       "themes": [
@@ -735,7 +818,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Первобытное мышление",
       "author": "К. Леви-Стросс",
       "year": 1962,
-      "status": "planned",
+      "status": "unread",
       "discipline": "antropologiya",
       "themes": [
         "mif",
@@ -749,7 +832,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Мифологии",
       "author": "Р. Барт",
       "year": 1957,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "semiotika",
       "themes": [
@@ -777,7 +860,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Слова и вещи",
       "author": "М. Фуко",
       "year": 1966,
-      "status": "reading",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "vlast-diskurs",
@@ -791,7 +874,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Надзирать и наказывать",
       "author": "М. Фуко",
       "year": 1975,
-      "status": "planned",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "vlast-diskurs"
@@ -804,7 +887,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Рождение трагедии из духа музыки",
       "author": "Ф. Ницше",
       "year": 1872,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "estetika",
       "themes": [
@@ -818,7 +901,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Недовольство культурой",
       "author": "З. Фрейд",
       "year": 1930,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "filosofiya-kultury",
       "themes": [],
@@ -830,7 +913,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Тотем и табу",
       "author": "З. Фрейд",
       "year": 1913,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-mifa",
       "themes": [
         "mif"
@@ -843,7 +926,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Архетипы и коллективное бессознательное",
       "author": "К. Г. Юнг",
       "year": 1934,
-      "status": "reading",
+      "status": "unread",
       "discipline": "filosofiya-mifa",
       "themes": [
         "mif"
@@ -856,7 +939,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Первобытная культура",
       "author": "Э. Б. Тайлор",
       "year": 1871,
-      "status": "read",
+      "status": "unread",
       "rating": 3,
       "discipline": "antropologiya",
       "themes": [],
@@ -868,7 +951,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Золотая ветвь",
       "author": "Дж. Фрэзер",
       "year": 1890,
-      "status": "reading",
+      "status": "unread",
       "discipline": "filosofiya-mifa",
       "themes": [
         "mif"
@@ -881,7 +964,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Научная теория культуры",
       "author": "Б. Малиновский",
       "year": 1944,
-      "status": "planned",
+      "status": "unread",
       "discipline": "antropologiya",
       "themes": [],
       "note": "Функционализм, культура как ответ на потребности.",
@@ -892,7 +975,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Протестантская этика и дух капитализма",
       "author": "М. Вебер",
       "year": 1905,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "sociologiya-kultury",
       "themes": [],
@@ -915,7 +998,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Истина и метод",
       "author": "Х.-Г. Гадамер",
       "year": 1960,
-      "status": "planned",
+      "status": "unread",
       "discipline": "istoriya-filosofii",
       "themes": [
         "germenevtika"
@@ -941,7 +1024,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Произведение искусства в эпоху его технической воспроизводимости",
       "author": "В. Беньямин",
       "year": 1936,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "postmodern",
       "themes": [
@@ -955,7 +1038,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Диалектика Просвещения",
       "author": "Т. Адорно, М. Хоркхаймер",
       "year": 1947,
-      "status": "reading",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "massovaya"
@@ -968,7 +1051,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Симулякры и симуляция",
       "author": "Ж. Бодрийяр",
       "year": 1981,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "postmodern",
       "themes": [
@@ -983,7 +1066,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Состояние постмодерна",
       "author": "Ж.-Ф. Лиотар",
       "year": 1979,
-      "status": "planned",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [],
       "note": "Недоверие к метанарративам.",
@@ -994,7 +1077,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Общество спектакля",
       "author": "Г. Дебор",
       "year": 1967,
-      "status": "planned",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "massovaya"
@@ -1007,7 +1090,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Отсутствующая структура",
       "author": "У. Эко",
       "year": 1968,
-      "status": "planned",
+      "status": "unread",
       "discipline": "semiotika",
       "themes": [
         "struktura",
@@ -1021,7 +1104,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Диалектика мифа",
       "author": "А. Ф. Лосев",
       "year": 1930,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "filosofiya-mifa",
       "themes": [
@@ -1046,7 +1129,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Поэтика ранневизантийской литературы",
       "author": "С. С. Аверинцев",
       "year": 1977,
-      "status": "planned",
+      "status": "unread",
       "discipline": "istoriya-kultury",
       "themes": [],
       "note": "Слово и образ на границе античности и Средневековья.",
@@ -1057,7 +1140,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Критика способности суждения",
       "author": "И. Кант",
       "year": 1790,
-      "status": "reading",
+      "status": "unread",
       "discipline": "estetika",
       "themes": [],
       "note": "Прекрасное, возвышенное, целесообразность.",
@@ -1079,7 +1162,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Идеи к философии истории человечества",
       "author": "И. Г. Гердер",
       "year": 1784,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-kultury",
       "themes": [],
       "note": "Дух народа, историзм в понимании культур.",
@@ -1103,7 +1186,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Государство",
       "author": "Платон",
       "year": -375,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "istoriya-filosofii",
       "themes": [],
@@ -1115,7 +1198,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Поэтика",
       "author": "Аристотель",
       "year": -335,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "estetika",
       "themes": [],
@@ -1127,7 +1210,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Восстание масс",
       "author": "Х. Ортега-и-Гассет",
       "year": 1930,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "sociologiya-kultury",
       "themes": [
@@ -1141,7 +1224,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Священное и мирское",
       "author": "М. Элиаде",
       "year": 1957,
-      "status": "reading",
+      "status": "unread",
       "discipline": "filosofiya-mifa",
       "themes": [
         "mif"
@@ -1154,7 +1237,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Курс общей лингвистики",
       "author": "Ф. де Соссюр",
       "year": 1916,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "semiotika",
       "themes": [
@@ -1170,7 +1253,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Морфология сказки",
       "author": "В. Я. Пропп",
       "year": 1928,
-      "status": "read",
+      "status": "unread",
       "rating": 5,
       "discipline": "semiotika",
       "themes": [
@@ -1185,7 +1268,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Исторические корни волшебной сказки",
       "author": "В. Я. Пропп",
       "year": 1946,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-mifa",
       "themes": [
         "mif",
@@ -1199,7 +1282,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Лингвистика и поэтика",
       "author": "Р. О. Якобсон",
       "year": 1960,
-      "status": "planned",
+      "status": "unread",
       "discipline": "semiotika",
       "themes": [
         "znak-simvol",
@@ -1214,7 +1297,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Очерк о даре",
       "author": "М. Мосс",
       "year": 1925,
-      "status": "planned",
+      "status": "unread",
       "discipline": "antropologiya",
       "themes": [
         "ritual"
@@ -1227,7 +1310,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Обряды перехода",
       "author": "А. ван Геннеп",
       "year": 1909,
-      "status": "planned",
+      "status": "unread",
       "discipline": "antropologiya",
       "themes": [
         "ritual"
@@ -1240,7 +1323,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Символ и ритуал",
       "author": "В. Тэрнер",
       "year": 1967,
-      "status": "reading",
+      "status": "unread",
       "discipline": "antropologiya",
       "themes": [
         "ritual",
@@ -1254,7 +1337,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Чистота и опасность",
       "author": "М. Дуглас",
       "year": 1966,
-      "status": "planned",
+      "status": "unread",
       "discipline": "antropologiya",
       "themes": [
         "ritual"
@@ -1280,7 +1363,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Магия, наука и религия",
       "author": "Б. Малиновский",
       "year": 1948,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-mifa",
       "themes": [
         "mif",
@@ -1318,7 +1401,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Бегство от свободы",
       "author": "Э. Фромм",
       "year": 1941,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "sociologiya-kultury",
       "themes": [],
@@ -1330,7 +1413,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "О процессе цивилизации",
       "author": "Н. Элиас",
       "year": 1939,
-      "status": "planned",
+      "status": "unread",
       "discipline": "sociologiya-kultury",
       "themes": [
         "telesnost"
@@ -1343,7 +1426,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Различение",
       "author": "П. Бурдьё",
       "year": 1979,
-      "status": "planned",
+      "status": "unread",
       "discipline": "sociologiya-kultury",
       "themes": [
         "massovaya"
@@ -1369,7 +1452,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Понимание медиа",
       "author": "М. Маклюэн",
       "year": 1964,
-      "status": "reading",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "media",
@@ -1383,7 +1466,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Ориентализм",
       "author": "Э. Саид",
       "year": 1978,
-      "status": "planned",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "vlast-diskurs",
@@ -1410,7 +1493,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Тысяча плато",
       "author": "Ж. Делёз, Ф. Гваттари",
       "year": 1980,
-      "status": "reading",
+      "status": "unread",
       "discipline": "postmodern",
       "themes": [
         "struktura"
@@ -1423,7 +1506,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "История искусства",
       "author": "Э. Гомбрих",
       "year": 1950,
-      "status": "read",
+      "status": "unread",
       "rating": 4,
       "discipline": "estetika",
       "themes": [
@@ -1437,7 +1520,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Смысл и толкование изобразительного искусства",
       "author": "Э. Панофский",
       "year": 1955,
-      "status": "planned",
+      "status": "unread",
       "discipline": "estetika",
       "themes": [
         "vizual",
@@ -1464,7 +1547,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Категории средневековой культуры",
       "author": "А. Я. Гуревич",
       "year": 1972,
-      "status": "reading",
+      "status": "unread",
       "discipline": "istoriya-kultury",
       "themes": [],
       "note": "Картина мира Средневековья: время, пространство, право, труд.",
@@ -1489,7 +1572,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Человек перед лицом смерти",
       "author": "Ф. Арьес",
       "year": 1977,
-      "status": "planned",
+      "status": "unread",
       "discipline": "istoriya-kultury",
       "themes": [],
       "note": "История отношения к смерти в западной культуре; школа «Анналов».",
@@ -1500,7 +1583,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Культурология",
       "author": "А. Л. Доброхотов, А. Т. Калинкин",
       "year": 2010,
-      "status": "read",
+      "status": "unread",
       "rating": 3,
       "discipline": "teoriya-kultury",
       "themes": [],
@@ -1512,7 +1595,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Философия и метаморфозы культуры",
       "author": "В. В. Миронов",
       "year": 2005,
-      "status": "planned",
+      "status": "unread",
       "discipline": "filosofiya-kultury",
       "themes": [],
       "note": "Философское осмысление культуры и глобализации; декан филфака МГУ.",
@@ -1536,7 +1619,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Основы общей теории культуры",
       "author": "Г. С. Кнабе",
       "year": 1998,
-      "status": "planned",
+      "status": "unread",
       "discipline": "teoriya-kultury",
       "themes": [
         "morfologiya"
@@ -1549,7 +1632,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Социальная и культурная динамика",
       "author": "П. А. Сорокин",
       "year": 1937,
-      "status": "planned",
+      "status": "unread",
       "discipline": "sociologiya-kultury",
       "themes": [
         "civilizacii",
@@ -1563,7 +1646,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Столкновение цивилизаций",
       "author": "С. Хантингтон",
       "year": 1996,
-      "status": "read",
+      "status": "unread",
       "rating": 3,
       "discipline": "filosofiya-kultury",
       "themes": [
@@ -1605,7 +1688,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Мышление и речь",
       "author": "Л. С. Выготский",
       "year": 1934,
-      "status": "planned",
+      "status": "unread",
       "discipline": "semiotika",
       "themes": [
         "yazyk",
@@ -1619,7 +1702,7 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
       "title": "Понимание культур через посредство ключевых слов",
       "author": "А. Вежбицкая",
       "year": 1997,
-      "status": "planned",
+      "status": "unread",
       "discipline": "semiotika",
       "themes": [
         "yazyk"
@@ -2455,12 +2538,15 @@ function el(name, attrs = {}) {
 
 const STATUS_ORDER = ['read', 'reading', 'planned', 'unread'];
 const NOTES_KEY = 'lada.notes.v1';
+const STATUS_KEY = 'lada.status.v1';
+const THEME_KEY = 'lada.theme.v1';
 
 // --- Глобальное состояние -------------------------------------------------
 let DATA = null;
 let academic = null;        // { nodes, links, disciplineById, statusById }
 let graph = null;
 let notes = loadNotes();    // { nodeId: { text, updated, display? } }
+let statusOverrides = loadStatus(); // { bookId: status } — личные отметки чтения
 let showNotesLayer = true;
 let lastPersonal = { hasNote: new Set(), refs: new Map(), kwDisplay: new Map() };
 
@@ -2484,6 +2570,18 @@ function saveNotes() {
   try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
   catch { /* приватный режим / песочница — храним только в памяти */ }
 }
+function loadStatus() {
+  try { return JSON.parse(localStorage.getItem(STATUS_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveStatus() {
+  try { localStorage.setItem(STATUS_KEY, JSON.stringify(statusOverrides)); }
+  catch { /* только в памяти */ }
+}
+// Эффективный статус книги: личная отметка важнее статуса из данных.
+function effectiveStatus(book) {
+  return statusOverrides[book.id] || book.status || 'unread';
+}
 
 // --- Академическая модель графа -------------------------------------------
 function buildAcademicModel(data) {
@@ -2493,7 +2591,7 @@ function buildAcademicModel(data) {
   const nodes = [];
   for (const b of data.books) {
     const disc = disciplineById.get(b.discipline);
-    nodes.push({ ...b, type: 'book', color: disc ? disc.color : '#888', short: shorten(b.title) });
+    nodes.push({ ...b, status: effectiveStatus(b), type: 'book', color: disc ? disc.color : '#888', short: shorten(b.title) });
   }
   for (const t of data.themes) {
     nodes.push({ id: 't:' + t.id, name: t.name, type: 'theme' });
@@ -2550,6 +2648,13 @@ function buildPersonalLayer() {
 }
 
 function buildFullModel() {
+  // Обновляем эффективный статус книг — он мог измениться отметками пользователя.
+  for (const n of academic.nodes) {
+    if (n.type === 'book') {
+      const b = DATA.books.find((x) => x.id === n.id);
+      if (b) n.status = effectiveStatus(b);
+    }
+  }
   const personal = buildPersonalLayer();
   lastPersonal = personal;
   const nodes = [...academic.nodes, ...(showNotesLayer ? personal.nodes : [])];
@@ -2565,6 +2670,7 @@ function refreshGraphOnly() {
   graph.setData(buildFullModel());
   applyFilters();
   updateNotesCount();
+  buildStats(DATA);
 }
 function scheduleGraphRefresh() {
   clearTimeout(refreshTimer);
@@ -2610,7 +2716,30 @@ function render(data) {
   document.querySelector('#import-notes').addEventListener('click', () => document.querySelector('#import-file').click());
   document.querySelector('#import-file').addEventListener('change', importNotes);
 
+  initTheme();
+  document.querySelector('#theme-toggle').addEventListener('click', toggleTheme);
+
   window.__graph = graph;
+}
+
+// --- Тема ------------------------------------------------------------------
+function initTheme() {
+  let saved;
+  try { saved = localStorage.getItem(THEME_KEY); } catch { /* ignore */ }
+  const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  applyTheme(saved || (prefersLight ? 'light' : 'dark'));
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const icon = document.querySelector('#theme-icon');
+  const label = document.querySelector('#theme-label');
+  if (icon) icon.textContent = theme === 'light' ? '☀️' : '🌙';
+  if (label) label.textContent = theme === 'light' ? 'Светлая' : 'Тёмная';
+}
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY, next); } catch { /* ignore */ }
 }
 
 // --- Статистика ------------------------------------------------------------
@@ -2629,11 +2758,12 @@ function buildStats(data) {
           return `<span style="width:${(counts[s] / total) * 100}%;background:${st.color}" title="${st.label}: ${counts[s]}"></span>`;
         }).join('')}
       </div>
+      <p class="progress__hint">Отметьте статус чтения в карточке книги (кнопки под названием). Отметки сохраняются в браузере.</p>
     </div>`;
 }
 function countByStatus(books) {
   const c = { read: 0, reading: 0, planned: 0, unread: 0 };
-  for (const b of books) c[b.status] = (c[b.status] || 0) + 1;
+  for (const b of books) c[effectiveStatus(b)] = (c[effectiveStatus(b)] || 0) + 1;
   return c;
 }
 function updateNotesCount() {
@@ -2726,7 +2856,15 @@ function bookDetailHtml(node) {
     <div class="detail__author">${escapeHtml(node.author)}${node.year ? ' · ' + formatYear(node.year) : ''}</div>
     <div class="detail__status">
       <span class="badge" style="background:${status.color}">${status.label}</span>
-      ${node.rating ? `<span class="rating">${'★'.repeat(node.rating)}${'☆'.repeat(5 - node.rating)}</span>` : ''}
+      ${node.status === 'read' && node.rating ? `<span class="rating">${'★'.repeat(node.rating)}${'☆'.repeat(5 - node.rating)}</span>` : ''}
+    </div>
+    <div class="detail__section">
+      <h3>Статус чтения</h3>
+      <div class="status-picker">
+        ${DATA.meta.statuses.map((s) =>
+          `<button type="button" class="status-btn${node.status === s.id ? ' is-active' : ''}" data-set-status="${s.id}">
+            <i style="background:${s.color}"></i>${s.label}</button>`).join('')}
+      </div>
     </div>
     ${node.note ? `<p class="detail__note">${escapeHtml(node.note)}</p>` : ''}
     ${node.idea ? `<div class="detail__section"><h3>Основные идеи</h3><div class="detail__idea">${renderParagraphs(node.idea)}</div></div>` : ''}
@@ -2809,12 +2947,24 @@ function wireDetail(node) {
       renderDetail(graph.nodeById.get(node.id) || node);
     });
   }
+  panel.querySelectorAll('[data-set-status]').forEach((el) =>
+    el.addEventListener('click', () => setStatus(node.id, el.dataset.setStatus)));
   panel.querySelectorAll('.wikilink').forEach((el) =>
     el.addEventListener('click', () => selectKeyword(el.dataset.kw, el.dataset.disp)));
   panel.querySelectorAll('.backlink').forEach((el) =>
     el.addEventListener('click', () => goTo(el.dataset.goto)));
   panel.querySelectorAll('.theme-link').forEach((el) =>
     el.addEventListener('click', () => goTo(el.dataset.theme)));
+}
+
+function setStatus(bookId, status) {
+  const book = DATA.books.find((b) => b.id === bookId);
+  // Повторный клик по текущему статусу — снять отметку (вернуть статус из данных).
+  if (effectiveStatus(book) === status) delete statusOverrides[bookId];
+  else statusOverrides[bookId] = status;
+  saveStatus();
+  refreshGraphOnly();
+  renderDetail(graph.nodeById.get(bookId));
 }
 
 function setNote(id, text, node) {

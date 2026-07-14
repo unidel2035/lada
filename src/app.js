@@ -4,12 +4,15 @@ import { KnowledgeGraph } from './graph.js';
 
 const STATUS_ORDER = ['read', 'reading', 'planned', 'unread'];
 const NOTES_KEY = 'lada.notes.v1';
+const STATUS_KEY = 'lada.status.v1';
+const THEME_KEY = 'lada.theme.v1';
 
 // --- Глобальное состояние -------------------------------------------------
 let DATA = null;
 let academic = null;        // { nodes, links, disciplineById, statusById }
 let graph = null;
 let notes = loadNotes();    // { nodeId: { text, updated, display? } }
+let statusOverrides = loadStatus(); // { bookId: status } — личные отметки чтения
 let showNotesLayer = true;
 let lastPersonal = { hasNote: new Set(), refs: new Map(), kwDisplay: new Map() };
 
@@ -33,6 +36,18 @@ function saveNotes() {
   try { localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
   catch { /* приватный режим / песочница — храним только в памяти */ }
 }
+function loadStatus() {
+  try { return JSON.parse(localStorage.getItem(STATUS_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveStatus() {
+  try { localStorage.setItem(STATUS_KEY, JSON.stringify(statusOverrides)); }
+  catch { /* только в памяти */ }
+}
+// Эффективный статус книги: личная отметка важнее статуса из данных.
+function effectiveStatus(book) {
+  return statusOverrides[book.id] || book.status || 'unread';
+}
 
 // --- Академическая модель графа -------------------------------------------
 function buildAcademicModel(data) {
@@ -42,7 +57,7 @@ function buildAcademicModel(data) {
   const nodes = [];
   for (const b of data.books) {
     const disc = disciplineById.get(b.discipline);
-    nodes.push({ ...b, type: 'book', color: disc ? disc.color : '#888', short: shorten(b.title) });
+    nodes.push({ ...b, status: effectiveStatus(b), type: 'book', color: disc ? disc.color : '#888', short: shorten(b.title) });
   }
   for (const t of data.themes) {
     nodes.push({ id: 't:' + t.id, name: t.name, type: 'theme' });
@@ -99,6 +114,13 @@ function buildPersonalLayer() {
 }
 
 function buildFullModel() {
+  // Обновляем эффективный статус книг — он мог измениться отметками пользователя.
+  for (const n of academic.nodes) {
+    if (n.type === 'book') {
+      const b = DATA.books.find((x) => x.id === n.id);
+      if (b) n.status = effectiveStatus(b);
+    }
+  }
   const personal = buildPersonalLayer();
   lastPersonal = personal;
   const nodes = [...academic.nodes, ...(showNotesLayer ? personal.nodes : [])];
@@ -114,6 +136,7 @@ function refreshGraphOnly() {
   graph.setData(buildFullModel());
   applyFilters();
   updateNotesCount();
+  buildStats(DATA);
 }
 function scheduleGraphRefresh() {
   clearTimeout(refreshTimer);
@@ -159,7 +182,30 @@ function render(data) {
   document.querySelector('#import-notes').addEventListener('click', () => document.querySelector('#import-file').click());
   document.querySelector('#import-file').addEventListener('change', importNotes);
 
+  initTheme();
+  document.querySelector('#theme-toggle').addEventListener('click', toggleTheme);
+
   window.__graph = graph;
+}
+
+// --- Тема ------------------------------------------------------------------
+function initTheme() {
+  let saved;
+  try { saved = localStorage.getItem(THEME_KEY); } catch { /* ignore */ }
+  const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+  applyTheme(saved || (prefersLight ? 'light' : 'dark'));
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const icon = document.querySelector('#theme-icon');
+  const label = document.querySelector('#theme-label');
+  if (icon) icon.textContent = theme === 'light' ? '☀️' : '🌙';
+  if (label) label.textContent = theme === 'light' ? 'Светлая' : 'Тёмная';
+}
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  applyTheme(next);
+  try { localStorage.setItem(THEME_KEY, next); } catch { /* ignore */ }
 }
 
 // --- Статистика ------------------------------------------------------------
@@ -178,11 +224,12 @@ function buildStats(data) {
           return `<span style="width:${(counts[s] / total) * 100}%;background:${st.color}" title="${st.label}: ${counts[s]}"></span>`;
         }).join('')}
       </div>
+      <p class="progress__hint">Отметьте статус чтения в карточке книги (кнопки под названием). Отметки сохраняются в браузере.</p>
     </div>`;
 }
 function countByStatus(books) {
   const c = { read: 0, reading: 0, planned: 0, unread: 0 };
-  for (const b of books) c[b.status] = (c[b.status] || 0) + 1;
+  for (const b of books) c[effectiveStatus(b)] = (c[effectiveStatus(b)] || 0) + 1;
   return c;
 }
 function updateNotesCount() {
@@ -275,7 +322,15 @@ function bookDetailHtml(node) {
     <div class="detail__author">${escapeHtml(node.author)}${node.year ? ' · ' + formatYear(node.year) : ''}</div>
     <div class="detail__status">
       <span class="badge" style="background:${status.color}">${status.label}</span>
-      ${node.rating ? `<span class="rating">${'★'.repeat(node.rating)}${'☆'.repeat(5 - node.rating)}</span>` : ''}
+      ${node.status === 'read' && node.rating ? `<span class="rating">${'★'.repeat(node.rating)}${'☆'.repeat(5 - node.rating)}</span>` : ''}
+    </div>
+    <div class="detail__section">
+      <h3>Статус чтения</h3>
+      <div class="status-picker">
+        ${DATA.meta.statuses.map((s) =>
+          `<button type="button" class="status-btn${node.status === s.id ? ' is-active' : ''}" data-set-status="${s.id}">
+            <i style="background:${s.color}"></i>${s.label}</button>`).join('')}
+      </div>
     </div>
     ${node.note ? `<p class="detail__note">${escapeHtml(node.note)}</p>` : ''}
     ${node.idea ? `<div class="detail__section"><h3>Основные идеи</h3><div class="detail__idea">${renderParagraphs(node.idea)}</div></div>` : ''}
@@ -358,12 +413,24 @@ function wireDetail(node) {
       renderDetail(graph.nodeById.get(node.id) || node);
     });
   }
+  panel.querySelectorAll('[data-set-status]').forEach((el) =>
+    el.addEventListener('click', () => setStatus(node.id, el.dataset.setStatus)));
   panel.querySelectorAll('.wikilink').forEach((el) =>
     el.addEventListener('click', () => selectKeyword(el.dataset.kw, el.dataset.disp)));
   panel.querySelectorAll('.backlink').forEach((el) =>
     el.addEventListener('click', () => goTo(el.dataset.goto)));
   panel.querySelectorAll('.theme-link').forEach((el) =>
     el.addEventListener('click', () => goTo(el.dataset.theme)));
+}
+
+function setStatus(bookId, status) {
+  const book = DATA.books.find((b) => b.id === bookId);
+  // Повторный клик по текущему статусу — снять отметку (вернуть статус из данных).
+  if (effectiveStatus(book) === status) delete statusOverrides[bookId];
+  else statusOverrides[bookId] = status;
+  saveStatus();
+  refreshGraphOnly();
+  renderDetail(graph.nodeById.get(bookId));
 }
 
 function setNote(id, text, node) {
