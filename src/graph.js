@@ -194,6 +194,7 @@ export class KnowledgeGraph {
   _nodeRadius(nd) {
     if (nd.type === 'theme') return 0;
     if (nd.type === 'keyword') return 6 + Math.min(nd.degree || 0, 6) * 1.4;
+    if (nd.type === 'philosopher') return 9 + Math.min(nd.degree || 0, 8) * 1.5;
     const base = nd.status === 'read' ? 10 : 8;
     return base + Math.min(nd.degree || 0, 6) * 1.6;
   }

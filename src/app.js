@@ -59,13 +59,21 @@ function buildAcademicModel(data) {
     const disc = disciplineById.get(b.discipline);
     nodes.push({ ...b, status: effectiveStatus(b), type: 'book', color: disc ? disc.color : '#888', short: shorten(b.title) });
   }
+  // философы — узлы-персоны (раздел античной философии)
+  for (const p of data.philosophers || []) {
+    const disc = disciplineById.get(p.discipline);
+    nodes.push({ ...p, type: 'philosopher', color: disc ? disc.color : '#888', short: shorten(p.name, 18) });
+  }
   for (const t of data.themes) {
     nodes.push({ id: 't:' + t.id, name: t.name, type: 'theme' });
   }
 
-  const links = data.links.map((l) => ({ ...l }));
+  const links = [...data.links.map((l) => ({ ...l })), ...(data.philLinks || []).map((l) => ({ ...l }))];
   for (const b of data.books) {
     for (const th of b.themes || []) links.push({ source: b.id, target: 't:' + th, type: 'theme' });
+  }
+  for (const p of data.philosophers || []) {
+    for (const th of p.themes || []) links.push({ source: p.id, target: 't:' + th, type: 'theme' });
   }
   return { nodes, links, disciplineById, statusById };
 }
@@ -270,10 +278,17 @@ function buildFilters(data) {
 function applyFilters() {
   const q = document.querySelector('#search').value.trim().toLowerCase();
   graph.setFilter((nd) => {
-    if (nd.type !== 'book') return true;
-    if (!activeStatuses.has(nd.status)) return false;
-    if (!activeDisciplines.has(nd.discipline)) return false;
-    if (q && !(nd.title + ' ' + nd.author).toLowerCase().includes(q)) return false;
+    if (nd.type === 'book') {
+      if (!activeStatuses.has(nd.status)) return false;
+      if (!activeDisciplines.has(nd.discipline)) return false;
+      if (q && !(nd.title + ' ' + nd.author).toLowerCase().includes(q)) return false;
+      return true;
+    }
+    if (nd.type === 'philosopher') {
+      if (!activeDisciplines.has(nd.discipline)) return false;
+      if (q && !(nd.name + ' ' + (nd.school || '')).toLowerCase().includes(q)) return false;
+      return true;
+    }
     return true;
   });
 }
@@ -283,6 +298,7 @@ function renderDetail(node) {
   const panel = document.querySelector('#detail');
   if (!node) { panel.classList.remove('is-open'); panel.innerHTML = emptyDetail(); return; }
   if (node.type === 'book') panel.innerHTML = bookDetailHtml(node);
+  else if (node.type === 'philosopher') panel.innerHTML = philosopherDetailHtml(node);
   else if (node.type === 'theme') panel.innerHTML = themeDetailHtml(node);
   else if (node.type === 'keyword') panel.innerHTML = keywordDetailHtml(node);
   panel.classList.add('is-open');
@@ -304,17 +320,71 @@ function noteEditorHtml(nodeId) {
     </div>`;
 }
 
+// Метаданные любого узла (книга или философ) — для списков связей.
+function nodeMeta(id) {
+  const b = DATA.books.find((x) => x.id === id);
+  if (b) {
+    const disc = academic.disciplineById.get(b.discipline);
+    const st = effectiveStatus(b);
+    return { id, kind: 'book', label: b.title, sub: b.author, color: disc ? disc.color : '#888',
+      dotColor: (academic.statusById.get(st) || {}).color || '#888' };
+  }
+  const p = (DATA.philosophers || []).find((x) => x.id === id);
+  if (p) {
+    const disc = academic.disciplineById.get(p.discipline);
+    const c = disc ? disc.color : '#888';
+    return { id, kind: 'philosopher', label: p.name, sub: p.school || p.years, color: c, dotColor: c };
+  }
+  return null;
+}
+
+// Все связи узла (из links и philLinks), с подписью типа.
+function connectionsFor(id) {
+  const all = [...DATA.links, ...(DATA.philLinks || [])];
+  const out = [];
+  for (const l of all) {
+    if (l.source !== id && l.target !== id) continue;
+    if (l.type === 'theme') continue;
+    const meta = nodeMeta(l.source === id ? l.target : l.source);
+    if (!meta) continue;
+    const lt = DATA.meta.linkTypes.find((t) => t.id === l.type);
+    out.push({ ...meta, rel: lt ? lt.label : l.type });
+  }
+  return out;
+}
+
+function connectionsHtml(connections) {
+  return `<div class="detail__section"><h3>Связи (${connections.length})</h3>
+    <ul class="detail__list">${connections.map((c) =>
+      `<li class="conn" data-goto="${escapeHtml(c.id)}"><span class="dot" style="background:${c.dotColor}"></span><span class="rel">${c.rel}:</span> <span class="b-title">${escapeHtml(c.label)}</span> <em>— ${escapeHtml(c.sub || '')}</em></li>`).join('')}</ul></div>`;
+}
+
+function themesHtml(themeIds) {
+  if (!themeIds || !themeIds.length) return '';
+  return `<div class="detail__section"><h3>Темы</h3>
+    <div class="tags">${themeIds.map((t) => {
+      const th = DATA.themes.find((x) => x.id === t);
+      return `<span class="tag theme-link" data-theme="t:${t}">${escapeHtml(th ? th.name : t)}</span>`;
+    }).join('')}</div></div>`;
+}
+
+function philosopherDetailHtml(node) {
+  const disc = academic.disciplineById.get(node.discipline);
+  const connections = connectionsFor(node.id);
+  return `
+    <div class="detail__kicker" style="color:${disc.color}">Философ · ${escapeHtml(node.period || 'античность')}</div>
+    <h2 class="detail__title">${escapeHtml(node.name)}</h2>
+    <div class="detail__author">${escapeHtml(node.years || '')}${node.school ? ' · ' + escapeHtml(node.school) : ''}</div>
+    ${node.idea ? `<div class="detail__section"><h3>Основные идеи</h3><div class="detail__idea">${renderParagraphs(node.idea)}</div></div>` : ''}
+    ${themesHtml(node.themes)}
+    ${connections.length ? connectionsHtml(connections) : ''}
+    ${noteEditorHtml(node.id)}`;
+}
+
 function bookDetailHtml(node) {
   const disc = academic.disciplineById.get(node.discipline);
   const status = academic.statusById.get(node.status);
-  const connections = DATA.links
-    .filter((l) => l.source === node.id || l.target === node.id)
-    .map((l) => {
-      const otherId = l.source === node.id ? l.target : l.source;
-      const other = DATA.books.find((b) => b.id === otherId);
-      const lt = DATA.meta.linkTypes.find((t) => t.id === l.type);
-      return other ? { title: other.title, author: other.author, rel: lt ? lt.label : l.type, status: other.status } : null;
-    }).filter(Boolean);
+  const connections = connectionsFor(node.id);
 
   return `
     <div class="detail__kicker" style="color:${disc.color}">${escapeHtml(disc.name)}</div>
@@ -334,28 +404,23 @@ function bookDetailHtml(node) {
     </div>
     ${node.note ? `<p class="detail__note">${escapeHtml(node.note)}</p>` : ''}
     ${node.idea ? `<div class="detail__section"><h3>Основные идеи</h3><div class="detail__idea">${renderParagraphs(node.idea)}</div></div>` : ''}
-    ${node.themes && node.themes.length ? `
-      <div class="detail__section"><h3>Темы</h3>
-        <div class="tags">${node.themes.map((t) => {
-          const th = DATA.themes.find((x) => x.id === t);
-          return `<span class="tag theme-link" data-theme="t:${t}">${escapeHtml(th ? th.name : t)}</span>`;
-        }).join('')}</div></div>` : ''}
-    ${connections.length ? `
-      <div class="detail__section"><h3>Интеллектуальные связи (${connections.length})</h3>
-        <ul class="detail__list">${connections.map((c) =>
-          `<li><span class="dot dot--${c.status}"></span><span class="rel">${c.rel}:</span> ${escapeHtml(c.title)} <em>— ${escapeHtml(c.author)}</em></li>`).join('')}</ul></div>` : ''}
+    ${themesHtml(node.themes)}
+    ${connections.length ? connectionsHtml(connections) : ''}
     ${noteEditorHtml(node.id)}`;
 }
 
 function themeDetailHtml(node) {
   const themeId = node.id.slice(2);
-  const related = DATA.books.filter((b) => (b.themes || []).includes(themeId));
+  const related = [
+    ...DATA.books.filter((b) => (b.themes || []).includes(themeId)),
+    ...(DATA.philosophers || []).filter((p) => (p.themes || []).includes(themeId)),
+  ].map((n) => nodeMeta(n.id)).filter(Boolean);
   return `
     <div class="detail__kicker">Тема</div>
     <h2 class="detail__title">${escapeHtml(node.name)}</h2>
-    <div class="detail__section"><h3>Книги по теме (${related.length})</h3>
-      <ul class="detail__list">${related.map((b) =>
-        `<li><span class="dot dot--${b.status}"></span>${escapeHtml(b.title)} <em>— ${escapeHtml(b.author)}</em></li>`).join('')}</ul></div>
+    <div class="detail__section"><h3>Книги и философы по теме (${related.length})</h3>
+      <ul class="detail__list">${related.map((c) =>
+        `<li class="conn" data-goto="${escapeHtml(c.id)}"><span class="dot" style="background:${c.dotColor}"></span><span class="b-title">${escapeHtml(c.label)}</span> <em>— ${escapeHtml(c.sub || '')}</em></li>`).join('')}</ul></div>
     ${noteEditorHtml(node.id)}`;
 }
 
@@ -382,10 +447,9 @@ function nodeLabel(id) {
     const disp = lastPersonal.kwDisplay.get(id.slice(3)) || id.slice(3);
     return { id, label: disp, color: '#b48ead' };
   }
-  const b = DATA.books.find((x) => x.id === id);
-  if (!b) return null;
-  const disc = academic.disciplineById.get(b.discipline);
-  return { id, label: b.title, color: disc ? disc.color : '#888' };
+  const meta = nodeMeta(id);
+  if (meta) return { id, label: meta.label, color: meta.color };
+  return null;
 }
 
 function emptyDetail() {
@@ -417,7 +481,7 @@ function wireDetail(node) {
     el.addEventListener('click', () => setStatus(node.id, el.dataset.setStatus)));
   panel.querySelectorAll('.wikilink').forEach((el) =>
     el.addEventListener('click', () => selectKeyword(el.dataset.kw, el.dataset.disp)));
-  panel.querySelectorAll('.backlink').forEach((el) =>
+  panel.querySelectorAll('.backlink, .conn').forEach((el) =>
     el.addEventListener('click', () => goTo(el.dataset.goto)));
   panel.querySelectorAll('.theme-link').forEach((el) =>
     el.addEventListener('click', () => goTo(el.dataset.theme)));

@@ -253,6 +253,14 @@ main.graph-wrap { grid-area: graph; position: relative; overflow: hidden; }
 .link--note { stroke: var(--note-link); stroke-opacity: .6; }
 .node.has-note .node__shape { filter: drop-shadow(0 0 3.5px var(--kw-fill)); }
 
+/* Философы — узлы-персоны (золотое кольцо отличает персону от книги) */
+.node--philosopher .node__shape {
+  fill: var(--node-color);
+  stroke: #e6c079;
+  stroke-width: 2.5;
+}
+.node--philosopher .node__label { fill: var(--node-label); font-weight: 600; }
+
 /* ---- Панель деталей ---- */
 aside.detail {
   grid-area: detail;
@@ -328,8 +336,8 @@ code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-si
 .note-hint b { color: var(--kw-fill); font-weight: 600; }
 .wikilink { color: var(--wikilink); cursor: pointer; border-bottom: 1px dashed var(--note-link); }
 .wikilink:hover { filter: brightness(1.15); }
-.backlink { cursor: pointer; }
-.backlink:hover .b-title { color: var(--accent); }
+.backlink, .conn { cursor: pointer; }
+.backlink:hover .b-title, .conn:hover .b-title { color: var(--accent); }
 .saved-flag { color: var(--good); font-size: 11px; margin-left: 8px; opacity: 0; transition: opacity .2s; }
 .saved-flag.show { opacity: 1; }
 

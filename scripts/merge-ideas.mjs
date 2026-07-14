@@ -10,7 +10,7 @@ if (!dir) { console.error('Укажите папку с ideas-*.json'); process.
 
 const dataPath = fileURLToPath(new URL('../data/knowledge-graph.json', import.meta.url));
 const data = JSON.parse(await readFile(dataPath, 'utf8'));
-const byId = new Map(data.books.map((b) => [b.id, b]));
+const byId = new Map([...data.books, ...(data.philosophers || [])].map((n) => [n.id, n]));
 
 const files = (await readdir(dir)).filter((f) => f.startsWith('ideas-') && f.endsWith('.json'));
 let applied = 0;
@@ -25,7 +25,7 @@ for (const f of files) {
   }
 }
 
-const without = data.books.filter((b) => !b.idea).map((b) => b.id);
+const without = [...data.books, ...(data.philosophers || [])].filter((b) => !b.idea).map((b) => b.id);
 await writeFile(dataPath, JSON.stringify(data, null, 2) + '\n');
 
 console.log(`Влито идей: ${applied}`);
