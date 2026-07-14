@@ -26,6 +26,18 @@
     <h4>Дисциплины / курсы</h4>
     <div id="filter-discipline"></div>
 
+    <h4>Мои заметки</h4>
+    <label class="toggle">
+      <input type="checkbox" id="toggle-notes" checked>
+      <i style="background:#b48ead"></i>Слой конспектов и ключевых слов
+    </label>
+    <p id="notes-count" class="muted" style="font-size:12px;margin:6px 4px 10px"></p>
+    <div class="notes-actions">
+      <button class="btn btn--sm" id="export-notes">Экспорт</button>
+      <button class="btn btn--sm" id="import-notes">Импорт</button>
+      <input type="file" id="import-file" accept="application/json" hidden>
+    </div>
+
     <button class="btn" id="reset-view">Сбросить вид</button>
   </aside>
 

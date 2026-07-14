@@ -164,6 +164,17 @@ main.graph-wrap { grid-area: graph; position: relative; overflow: hidden; }
 }
 .node--unread .node__label { fill: #7d8394; }
 
+/* Ключевые слова из конспектов (личный слой, как в Obsidian) */
+.node__shape--keyword {
+  fill: #b48ead;
+  stroke: #14161c;
+  stroke-width: 1.5;
+}
+.node--keyword .node__label { fill: #d9c4e0; font-style: italic; }
+.link--note { stroke: #8f6ba8; stroke-opacity: .6; }
+/* Метка: у узла есть мой конспект */
+.node.has-note .node__shape { filter: drop-shadow(0 0 3.5px #b48ead); }
+
 /* ---- Панель деталей ---- */
 aside.detail {
   grid-area: detail;
@@ -206,6 +217,41 @@ aside.detail {
 
 .muted { color: var(--muted); }
 code { background: var(--bg-elev); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+
+/* Основные идеи книги */
+.detail__idea {
+  font-size: 13px; line-height: 1.62; color: #d5dae6; margin: 14px 0;
+}
+.detail__idea p { margin: 0 0 10px; }
+
+/* Кнопки экспорт/импорт */
+.notes-actions { display: flex; gap: 8px; }
+.btn--sm { margin-top: 0; padding: 6px 8px; font-size: 12px; }
+
+/* Редактор конспекта */
+.note-editor {
+  width: 100%; min-height: 120px; resize: vertical;
+  padding: 10px 11px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg-elev);
+  color: var(--text); font-size: 13px; line-height: 1.5;
+  font-family: inherit;
+}
+.note-editor:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+.note-hint { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; }
+.note-hint b { color: #b48ead; font-weight: 600; }
+.note-rendered {
+  font-size: 13px; line-height: 1.6; color: #cfd4e0;
+  margin-top: 12px; white-space: pre-wrap;
+}
+.wikilink {
+  color: #cda9e0; cursor: pointer; border-bottom: 1px dashed #8f6ba8;
+}
+.wikilink:hover { color: #e6d4f2; }
+.wikilink--new { color: #9aa0b0; border-bottom-style: dotted; }
+.backlink { cursor: pointer; }
+.backlink:hover .b-title { color: var(--accent); }
+.saved-flag { color: #2f9e6f; font-size: 11px; margin-left: 8px; opacity: 0; transition: opacity .2s; }
+.saved-flag.show { opacity: 1; }
 
 /* адаптив */
 @media (max-width: 1100px) {

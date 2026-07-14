@@ -34,7 +34,14 @@ export class KnowledgeGraph {
     const cx = rect.width / 2 || 500;
     const cy = rect.height / 2 || 400;
 
+    // Сохраняем координаты уже размещённых узлов, чтобы граф не «прыгал»
+    // при добавлении/удалении заметок и ключевых слов.
+    const prev = this.nodeById || new Map();
+
     this.nodes = nodes.map((n, i) => {
+      const old = prev.get(n.id);
+      if (old) return { ...n, x: old.x, y: old.y, vx: old.vx, vy: old.vy };
+      // Новый узел появляется рядом с уже существующим соседом, если он есть.
       const angle = (i / nodes.length) * Math.PI * 2;
       const r = 60 + (i % 7) * 45;
       return {
@@ -59,7 +66,10 @@ export class KnowledgeGraph {
     for (const l of this.links) { l.source.degree++; l.target.degree++; }
 
     this._buildDom();
-    this.reheat(1);
+    // восстановить выделение, если выбранный узел ещё существует
+    if (this.selectedId && !this.nodeById.has(this.selectedId)) this.selectedId = null;
+    this._applyHighlight();
+    this.reheat(prev.size ? 0.5 : 1);
   }
 
   reheat(alpha = 0.8) {
@@ -155,10 +165,17 @@ export class KnowledgeGraph {
     }
 
     for (const nd of this.nodes) {
-      const g = el('g', { class: `node node--${nd.status || nd.type}`, 'data-id': nd.id });
-      const shape = nd.type === 'theme'
-        ? el('rect', { class: 'node__shape node__shape--theme', rx: 4 })
-        : el('circle', { class: 'node__shape', style: `--node-color:${nd.color}` });
+      const statusClass = nd.type === 'book' ? `node--${nd.status}` : `node--${nd.type}`;
+      const noteClass = nd.hasNote ? ' has-note' : '';
+      const g = el('g', { class: `node ${statusClass}${noteClass}`, 'data-id': nd.id });
+      let shape;
+      if (nd.type === 'theme') {
+        shape = el('rect', { class: 'node__shape node__shape--theme', rx: 4 });
+      } else if (nd.type === 'keyword') {
+        shape = el('circle', { class: 'node__shape node__shape--keyword' });
+      } else {
+        shape = el('circle', { class: 'node__shape', style: `--node-color:${nd.color}` });
+      }
       const label = el('text', { class: 'node__label' });
       label.textContent = nd.short || nd.title || nd.name;
       g.append(shape, label);
@@ -176,6 +193,7 @@ export class KnowledgeGraph {
 
   _nodeRadius(nd) {
     if (nd.type === 'theme') return 0;
+    if (nd.type === 'keyword') return 6 + Math.min(nd.degree || 0, 6) * 1.4;
     const base = nd.status === 'read' ? 10 : 8;
     return base + Math.min(nd.degree || 0, 6) * 1.6;
   }
