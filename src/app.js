@@ -18,6 +18,8 @@ let lastPersonal = { hasNote: new Set(), refs: new Map(), kwDisplay: new Map() }
 
 const activeStatuses = new Set(STATUS_ORDER);
 const activeDisciplines = new Set();
+const activeCollections = new Set();        // включённые крупные разделы
+let disciplineToCollection = new Map();     // дисциплина → id раздела
 
 // --- Загрузка данных ------------------------------------------------------
 async function loadData() {
@@ -177,7 +179,9 @@ function render(data) {
   graph.setData(buildFullModel());
 
   buildStats(data);
+  buildCollections(data);
   buildFilters(data);
+  applyFilters();
   updateNotesCount();
 
   document.querySelector('#search').addEventListener('input', applyFilters);
@@ -247,6 +251,38 @@ function updateNotesCount() {
     noteCount || kwCount ? `Конспектов: ${noteCount} · ключевых слов: ${kwCount}` : 'Пока нет конспектов';
 }
 
+// --- Разделы графа (крупные модули) ---------------------------------------
+function buildCollections(data) {
+  disciplineToCollection = new Map();
+  activeCollections.clear();
+  const cols = data.meta.collections || [];
+  for (const c of cols) {
+    activeCollections.add(c.id);
+    for (const dId of c.disciplines) disciplineToCollection.set(dId, c.id);
+  }
+  const box = document.querySelector('#filter-collections');
+  if (!box) return;
+  box.innerHTML = '';
+  if (cols.length < 2) return; // один раздел — переключать нечего
+  for (const c of cols) {
+    const n = data.books.filter((b) => c.disciplines.includes(b.discipline)).length
+      + (data.philosophers || []).filter((p) => c.disciplines.includes(p.discipline)).length;
+    const label = document.createElement('label');
+    label.className = 'toggle toggle--collection';
+    label.innerHTML = `<input type="checkbox" checked data-collection="${c.id}">
+      <span class="col-name">${c.name}</span><span class="col-count">${n}</span>`;
+    label.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) activeCollections.add(c.id); else activeCollections.delete(c.id);
+      applyFilters();
+    });
+    box.append(label);
+  }
+}
+function collectionActive(discipline) {
+  const col = disciplineToCollection.get(discipline);
+  return !col || activeCollections.has(col);
+}
+
 // --- Фильтры ---------------------------------------------------------------
 function buildFilters(data) {
   const sBox = document.querySelector('#filter-status');
@@ -277,19 +313,25 @@ function buildFilters(data) {
 }
 function applyFilters() {
   const q = document.querySelector('#search').value.trim().toLowerCase();
+  const bookVisible = (nd) =>
+    collectionActive(nd.discipline) && activeStatuses.has(nd.status) && activeDisciplines.has(nd.discipline)
+    && (!q || (nd.title + ' ' + nd.author).toLowerCase().includes(q));
+  const philVisible = (nd) =>
+    collectionActive(nd.discipline) && activeDisciplines.has(nd.discipline)
+    && (!q || (nd.name + ' ' + (nd.school || '')).toLowerCase().includes(q));
+
+  // темы показываем только если у них есть хотя бы один видимый узел
+  const visibleThemes = new Set();
+  for (const nd of academic.nodes) {
+    const vis = nd.type === 'book' ? bookVisible(nd) : nd.type === 'philosopher' ? philVisible(nd) : false;
+    if (vis) for (const t of nd.themes || []) visibleThemes.add('t:' + t);
+  }
+
   graph.setFilter((nd) => {
-    if (nd.type === 'book') {
-      if (!activeStatuses.has(nd.status)) return false;
-      if (!activeDisciplines.has(nd.discipline)) return false;
-      if (q && !(nd.title + ' ' + nd.author).toLowerCase().includes(q)) return false;
-      return true;
-    }
-    if (nd.type === 'philosopher') {
-      if (!activeDisciplines.has(nd.discipline)) return false;
-      if (q && !(nd.name + ' ' + (nd.school || '')).toLowerCase().includes(q)) return false;
-      return true;
-    }
-    return true;
+    if (nd.type === 'book') return bookVisible(nd);
+    if (nd.type === 'philosopher') return philVisible(nd);
+    if (nd.type === 'theme') return visibleThemes.has(nd.id);
+    return true; // ключевые слова
   });
 }
 

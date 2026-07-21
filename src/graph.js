@@ -224,7 +224,7 @@ export class KnowledgeGraph {
   _applyFilter() {
     if (!this.nodeEls) return;
     for (const [nd, { g }] of this.nodeEls) {
-      const visible = !this.filter || nd.type === 'theme' || this.filter(nd);
+      const visible = !this.filter || this.filter(nd);
       g.classList.toggle('is-hidden', !visible);
       nd._visible = visible;
     }

@@ -55,6 +55,31 @@
         "id": "trud",
         "label": "ключевой труд"
       }
+    ],
+    "collections": [
+      {
+        "id": "culturology",
+        "name": "Культурология",
+        "disciplines": [
+          "teoriya-kultury",
+          "filosofiya-kultury",
+          "semiotika",
+          "antropologiya",
+          "estetika",
+          "filosofiya-mifa",
+          "sociologiya-kultury",
+          "istoriya-filosofii",
+          "postmodern",
+          "istoriya-kultury"
+        ]
+      },
+      {
+        "id": "antique-philosophy",
+        "name": "Античная философия",
+        "disciplines": [
+          "antichnaya-filosofia"
+        ]
+      }
     ]
   },
   "disciplines": [

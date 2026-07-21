@@ -164,6 +164,19 @@ aside.sidebar {
   font-size: 12px; margin: 0 10px 6px 0;
 }
 
+/* Переключатели крупных разделов */
+.toggle--collection {
+  font-size: 13px; font-weight: 600; padding: 7px 8px;
+  border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px;
+  background: var(--bg-elev);
+}
+.toggle--collection .col-name { flex: 1; }
+.toggle--collection .col-count {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  background: var(--bg-panel); border: 1px solid var(--line);
+  border-radius: 20px; padding: 1px 8px;
+}
+
 #stats { margin-top: 4px; }
 .progress__head {
   display: flex; justify-content: space-between; align-items: baseline;
